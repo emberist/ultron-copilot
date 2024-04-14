@@ -635,7 +635,7 @@ export class SageFleet {
 
       // Calc the amount to deposit
       let amountToDeposit = BN.min(
-        amount,
+        amount.mul(resourceSpaceInCargoPerUnit),
         cargoHold.data.loadedAmount.gt(new BN(0))
           ? cargoHold.data.maxCapacity.sub(
               cargoHold.data.loadedAmount
