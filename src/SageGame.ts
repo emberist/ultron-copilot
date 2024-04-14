@@ -27,6 +27,9 @@ export enum ResourceName {
   CopperOre = "CopperOre",
   Lumanite = "Lumanite",
   Rochinol = "Rochinol",
+  Nitrogen = "Nitrogen",
+  Silica = "Silica",
+  TitaniumOre = "TitaniumOre",
   Sdu = "Sdu",
   EnergySubstrate = "EnergySubstrate",
   Electromagnet = "Electromagnet",
@@ -39,6 +42,9 @@ export enum ResourceName {
   CrystalLattice = "CrystalLattice",
   CopperWire = "CopperWire",
   Copper = "Copper",
+  Aerogel = "Aerogel",
+  Titanium = "Titanium",
+  FieldStabilizer = "FieldStabilizer",
   Electronics = "Electronics",
   Graphene = "Graphene",
   Hydrocarbon = "Hydrocarbon",
@@ -87,6 +93,9 @@ export class SageGame {
       [ResourceName.CopperOre]: new PublicKey("CUore1tNkiubxSwDEtLc3Ybs1xfWLs8uGjyydUYZ25xc"),
       [ResourceName.Lumanite]: new PublicKey("LUMACqD5LaKjs1AeuJYToybasTXoYQ7YkxJEc4jowNj"),
       [ResourceName.Rochinol]: new PublicKey("RCH1Zhg4zcSSQK8rw2s6rDMVsgBEWa4kiv1oLFndrN5"),
+      [ResourceName.Nitrogen]: new PublicKey("Nitro6idW5JCb2ysUPGUAvVqv3HmUR7NVH7NdybGJ4L"),
+      [ResourceName.Silica]: new PublicKey("SiLiCA4xKGkyymB5XteUVmUeLqE4JGQTyWBpKFESLgh"),
+      [ResourceName.TitaniumOre]: new PublicKey("tiorehR1rLfeATZ96YoByUkvNFsBfUUSQWgSH2mizXL"),
       [ResourceName.Sdu]: new PublicKey("SDUsgfSZaDhhZ76U3ZgvtFiXsfnHbf2VrzYxjBZ5YbM"),
       [ResourceName.EnergySubstrate]: new PublicKey("SUBSVX9LYiPrzHeg2bZrqFSDSKkrQkiCesr6SjtdHaX"),
       [ResourceName.Electromagnet]: new PublicKey("EMAGoQSP89CJV5focVjrpEuE4CeqJ4k1DouQW7gUu7yX"),
@@ -99,6 +108,9 @@ export class SageGame {
       [ResourceName.CrystalLattice]: new PublicKey("CRYSNnUd7cZvVfrEVtVNKmXiCPYdZ1S5pM5qG2FDVZHF"),
       [ResourceName.CopperWire]: new PublicKey("cwirGHLB2heKjCeTy4Mbp4M443fU4V7vy2JouvYbZna"),
       [ResourceName.Copper]: new PublicKey("CPPRam7wKuBkYzN5zCffgNU17RKaeMEns4ZD83BqBVNR"),
+      [ResourceName.Aerogel]: new PublicKey("aeroBCMu6AX6bCLYd1VQtigqZh8NGSjn54H1YSczHeJ"),
+      [ResourceName.Titanium]: new PublicKey("TTNM1SMkM7VKtyPW6CNBZ4cg3An3zzQ8NVLS2HpMaWL"),
+      [ResourceName.FieldStabilizer]: new PublicKey("FiELD9fGaCgiNMfzQKKZD78wxwnBHTwjiiJfsieb6VGb"),
       [ResourceName.Electronics]: new PublicKey("ELECrjC8m9GxCqcm4XCNpFvkS8fHStAvymS6MJbe3XLZ"),
       [ResourceName.Graphene]: new PublicKey("GRAPHKGoKtXtdPBx17h6fWopdT5tLjfAP8cDJ1SvvDn4"),
       [ResourceName.Hydrocarbon]: new PublicKey("HYCBuSWCJ5ZEyANexU94y1BaBPtAX2kzBgGD2vES2t6M"),
@@ -1145,7 +1157,7 @@ export class SageGame {
       };
       
       const getLimit = async (transaction: VersionedTransaction, connection: Connection): Promise<number> => {
-        const unitLimit = (await getSimulationUnits(transaction, connection) || 100000) + 1000;
+        const unitLimit = (await getSimulationUnits(transaction, connection) || 150000) + 1500;
         // console.log("\nUnit Limit:", unitLimit, "CU");
         return unitLimit;
       };

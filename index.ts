@@ -17,6 +17,7 @@ import { setCustomPriority } from "./utils/inputsV2/setCustomPriority";
 import { cargoMiningV2 } from "./scripts/cargoMiningV2";
 import { scanV2 } from "./scripts/scanV2";
 import { setActivityV2 } from "./utils/inputsV2/setActivity";
+import { setPlayerProfile } from "./utils/inputsV2/setPlayerProfile";
 
 const test = async () => {
   console.log(`Welcome to Ultron Copilot ${version}!`);
@@ -60,12 +61,18 @@ const test = async () => {
     return;
   }
 
-  const player = await SagePlayer.init(sage, playerProfiles.data[0]);
+  const playerProfile = playerProfiles.data.length == 1 ? 
+    playerProfiles.data[0] : 
+    (await setPlayerProfile(playerProfiles.data)).data;
 
+  const player = await SagePlayer.init(sage, playerProfile);
+
+  // 3. Check if player has enough Quattrini
   const qttrBalance = await sage.getQuattrinoBalance();
   if (qttrBalance.type !== "Success" || qttrBalance.data == 0) return;
   console.log(qttrBalance.message)
 
+  // 4. Set activity
   const activity = await setActivityV2();
 
   /* const userPoints = await player.getUserPointsAsync();
@@ -74,7 +81,7 @@ const test = async () => {
 
   switch (activity) {
     case "Mining":
-      // 3. Play with mining
+      // 5. Play with mining
       const mining = await miningV2(player);
       if (mining.type !== "Success") {
         console.log("Mining failed.", mining.type)
@@ -83,7 +90,7 @@ const test = async () => {
       break;
 
     case "Cargo":
-      // 4. Play with cargo
+      // 6. Play with cargo
       const cargo = await cargoV2(player);
       if (cargo.type !== "Success") {
         console.log("Cargo failed.", cargo.type)
@@ -92,7 +99,7 @@ const test = async () => {
       break;
 
     case "Combo":
-      // 5. Play with cargo mining
+      // 7. Play with cargo mining
       const cargoMining = await cargoMiningV2(player);
       if (cargoMining.type !== "Success") {
         console.log("Cargo mining failed.", cargoMining.type)
@@ -101,7 +108,7 @@ const test = async () => {
       break;
 
     case "Scan":
-      // 6. Play with scanning
+      // 8. Play with scanning
       const scan = await scanV2(player);
       if (scan.type !== "Success") {
         console.log("\nScan failed.", scan.type)
@@ -113,11 +120,11 @@ const test = async () => {
       return;
   }
 
-  // 7. Play with crafting (SageCrafting.ts)
+  // 9. Play with crafting (SageCrafting.ts)
   // ...
 
 
-  // 8. Play with galactic marketplace (GalacticMarketplace.ts)
+  // 10. Play with galactic marketplace (GalacticMarketplace.ts)
   // ...
 
   /* const data = await sage.getPlanets()
