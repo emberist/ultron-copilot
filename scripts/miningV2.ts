@@ -74,7 +74,7 @@ export const miningV2 = async (
     movementBack?.movement,
   );
   
-  const fuelNeeded = miningSessionData.fuelNeeded + goFuelNeeded + backFuelNeeded + 10000;
+  const fuelNeeded = miningSessionData.fuelNeeded + (goFuelNeeded + Math.round(goFuelNeeded * 0.3)) + (backFuelNeeded + Math.round(backFuelNeeded * 0.3));
   // console.log("Fuel needed:", fuelNeeded);
 
   const fuelTank = fleet.data.getFuelTank();
@@ -86,6 +86,8 @@ export const miningV2 = async (
 
   // 7. start mining loop
   for (let i = 0; i < cycles; i++) {
+    if (new BN(fuelNeeded).gt(fuelTank.maxCapacity)) return { type: "NotEnoughFuelCapacity" as const };
+
     // 0. Dock to starbase (optional)
     if (
       !fleet.data.getCurrentState().StarbaseLoadingBay && 

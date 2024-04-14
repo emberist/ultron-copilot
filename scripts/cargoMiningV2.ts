@@ -82,7 +82,7 @@ export const cargoMiningV2 = async (
     movementBack?.movement,
   );
   
-  const fuelNeeded = miningSessionData.fuelNeeded + goFuelNeeded + backFuelNeeded + 10000;
+  const fuelNeeded = miningSessionData.fuelNeeded + (goFuelNeeded + Math.round(goFuelNeeded * 0.3)) + (backFuelNeeded + Math.round(backFuelNeeded * 0.3));
   // console.log("Fuel needed:", fuelNeeded);
 
   const fuelTank = fleet.data.getFuelTank();
@@ -94,6 +94,8 @@ export const cargoMiningV2 = async (
 
   // 8. start cargo mining loop
   for (let i = 0; i < cycles; i++) {
+    if (new BN(fuelNeeded).gt(fuelTank.maxCapacity)) return { type: "NotEnoughFuelCapacity" as const };
+
     // 0. Dock to starbase (optional)
     if (
       !fleet.data.getCurrentState().StarbaseLoadingBay && 
@@ -106,7 +108,7 @@ export const cargoMiningV2 = async (
     ) {
       return fleet.data.getSageGame().getStarbaseBySector(fleetCurrentSector);
     }
-    
+
     // 1. load fuel
     if (fuelTank.loadedAmount.lt(new BN(fuelNeeded))) {
       await actionWrapper(loadCargo, fleet.data, ResourceName.Fuel, CargoPodType.FuelTank, new BN(MAX_AMOUNT));

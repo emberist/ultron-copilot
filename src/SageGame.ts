@@ -1145,20 +1145,23 @@ export class SageGame {
           (
             this.customPriorityFee.level === PriorityLevel.Custom && 
             this.customPriorityFee.value &&
-            this.customPriorityFee.value < PriorityLevelValue.Limit
+            this.customPriorityFee.value <= PriorityLevelValue.Limit
           ) ? this.customPriorityFee.value : 
           0;
 
         const rpf = await connection.getRecentPrioritizationFees({ lockedWritableAccounts: writableAccounts})
-        const priorityFee = 
+        
+        let priorityFee = 
           Math.round(rpf.map(item => item.prioritizationFee).reduce((acc, fee) => acc + fee, 0) / rpf.length) + customPriorityFee;
-          // console.log("\nPriority Fee:", priorityFee / 1000000, "Lamports per CU");
+        
+        if (priorityFee > PriorityLevelValue.Limit) priorityFee = 1000000;
+        //console.log("\nPriority Fee:", priorityFee, "Lamports per CU");
+        
         return priorityFee;
       };
       
       const getLimit = async (transaction: VersionedTransaction, connection: Connection): Promise<number> => {
         let unitLimit = (await getSimulationUnits(transaction, connection) || 150000) + 1500;
-        if (unitLimit > PriorityLevelValue.Limit) unitLimit = 1000000;
         // console.log("\nUnit Limit:", unitLimit, "CU");
         return unitLimit;
       };
