@@ -8,6 +8,12 @@ export const setFleetV2 = async (player: SagePlayer) => {
     const fleets = await player.getAllFleetsAsync();
     if (fleets.type !== "Success") return fleets;
 
+    /* const selectableFleets = fleets.data.filter((fleet) => {
+      return fleet.state.StarbaseLoadingBay || fleet.state.Idle;
+    });
+
+    if (selectableFleets.length === 0) return { type: "NoFleetsDockedOrUndocked" as const }; */
+
     const { selectedFleet } = await inquirer.prompt<{ selectedFleet: Fleet }>({
         type: "list",
         name: "selectedFleet",

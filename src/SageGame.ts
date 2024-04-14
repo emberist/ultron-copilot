@@ -1264,6 +1264,7 @@ export class SageGame {
 
               // If transaction failed to send
               if (result.status === "rejected") {
+                  // console.error(result)
                   const reason = this.parseError(result.reason);
                   console.error(`> Transaction #${i} failed on attempt ${attempts + 1}: ${reason}`);
                   const newBuild = await this.buildDynamicTransactions(instructions, fee);
@@ -1313,7 +1314,7 @@ export class SageGame {
         const errorCode = reason ? parseInt(reason.message.split(" ").pop().trim()) : null;
         if (errorCode && errorCode >= 6000/*  && reason.logs && reason.logs.length > 6 */) {
           const [error] = Object.values(sageErrorMap).filter(item => item.code == errorCode);
-          return error ? error.msg : reason;
+          return error ? `${errorCode} - ${error.msg}` : reason;
           /* const errorMessage: string[] = reason.logs[6].split(".");
           return errorMessage.slice(1, errorMessage.length - 1).map(item => item.trim()).join(" - "); */
         } else {

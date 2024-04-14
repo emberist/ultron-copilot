@@ -269,7 +269,7 @@ export class SageFleet {
           fullLoad: false,
         }
         return { 
-          type: "CargoPodIsEmpty" as const,
+          type: "Success" as const,
           data: cpe
         };
       }
@@ -623,7 +623,7 @@ export class SageFleet {
       // console.log(starbasePodMintAtaBalance)
 
       const cargoHold = await this.getCurrentCargoDataByType(cargoPodType);
-      if (cargoHold.type !== "Success" && cargoHold.type !== "CargoPodIsEmpty") return cargoHold;
+      if (cargoHold.type !== "Success") return cargoHold;
 
       const ixFleetCargoHoldMintAta = this.getSageGame().ixCreateAssociatedTokenAccountIdempotent(cargoHold.data.key, mint)
       try {
@@ -676,7 +676,7 @@ export class SageFleet {
       )
 
       ixs.push(ix_1);
-      return { type: "Success" as const, ixs };
+      return { type: "Success" as const, ixs, amountToDeposit };
     }
 
     async ixUnloadCargo(resourceName: ResourceName, cargoPodType: CargoPodType, amount: BN) {
@@ -705,10 +705,8 @@ export class SageFleet {
         ixs.push(ixStarbasePodMintAta.instruction);
       }
 
-      // console.log(mintAtaKey)
-
       const cargoPod = await this.getCurrentCargoDataByType(cargoPodType);
-      if (cargoPod.type !== "Success" && cargoPod.type !== "CargoPodIsEmpty") return cargoPod;
+      if (cargoPod.type !== "Success") return cargoPod;
       // console.log(cargoHold)
 
       const [fleetCargoPodResourceData] = cargoPod.data.resources.filter((item) => item.mint.equals(mint));
@@ -746,7 +744,7 @@ export class SageFleet {
       )
 
       ixs.push(ix_1);
-      return { type: "Success" as const, ixs };
+      return { type: "Success" as const, ixs, amountToWithdraw };
     }
     /** END CARGO */
 
@@ -915,7 +913,7 @@ export class SageFleet {
         this.getSageGame().getGamePoints().pilotXpCategory.modifier,
         this.player.getCouncilRankXpKey(),
         this.getSageGame().getGamePoints().councilRankXpCategory.category,
-        this.getSageGame().getGamePoints().miningXpCategory.modifier,
+        this.getSageGame().getGamePoints().councilRankXpCategory.modifier,
         this.getSageGame().getGameState().key,
         this.getSageGame().getGame().key,
         fuelInTankData.tokenAccountKey,
@@ -1091,7 +1089,7 @@ export class SageFleet {
     async ixSubwarpToSector(sector: Sector, fuelNeeded: BN) {
       const update = await this.update();
       if (update.type !== "Success") return { type: "FleetFailedToUpdate" as const };
-
+      
       const ixs: InstructionReturn[] = [];
       
       const fuelMint = this.getSageGame().getResourceMintByName(ResourceName.Fuel);
@@ -1101,7 +1099,7 @@ export class SageFleet {
       const [fuelInTankData] = fuelTank.resources.filter((item) => item.mint.equals(fuelMint));
       if (!fuelInTankData) return { type: "FleetFuelTankIsEmpty" as const };
 
-      if (new BN(fuelInTankData.tokenAccountKey).lt(fuelNeeded)) 
+      if (fuelInTankData.amount.lt(fuelNeeded)) 
         return { type: "NoEnoughFuelToSubwarp" as const };
 
       const input = { keyIndex: 0, toSector: sector.data.coordinates as [BN, BN] } as StartSubwarpInput;

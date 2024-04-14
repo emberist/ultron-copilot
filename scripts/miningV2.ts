@@ -98,7 +98,7 @@ export const miningV2 = async (
     ) {
       return fleet.data.getSageGame().getStarbaseBySector(fleetCurrentSector);
     }
-    
+
     // 1. load fuel
     if (fuelTank.loadedAmount.lt(new BN(fuelNeeded))) {
       await actionWrapper(loadCargo, fleet.data, ResourceName.Fuel, CargoPodType.FuelTank, new BN(MAX_AMOUNT));

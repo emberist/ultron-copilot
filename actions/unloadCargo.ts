@@ -9,7 +9,7 @@ export const unloadCargo = async (
   amount: BN
 ) => {
   // action starts
-  console.log(`\nUnloading ${amount} ${resourceName} from fleet...`);
+  console.log(`\nUnloading ${resourceName} from fleet...`);
 
   // data
   // ...
@@ -34,7 +34,7 @@ export const unloadCargo = async (
   if (sdt.type !== "Success") throw new Error(sdt.type); // retry entire action
 
   // other
-  console.log("Fleet cargo unloaded!");
+  console.log(`Unloaded ${ix.amountToWithdraw} ${resourceName} from cargo!`);
 
   // action ends
   return { type: "Success" as const };

@@ -4,5 +4,5 @@ export const sendNotification = async (
   notification: NotificationMessage,
   fleetName?: string
 ) => {
-  console.log(fleetName ? `${fleetName}: ${notification}` : notification);
+  console.log(fleetName ? `\n${fleetName}: ${notification}` : notification);
 };

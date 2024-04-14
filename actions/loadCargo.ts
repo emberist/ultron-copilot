@@ -9,7 +9,7 @@ export const loadCargo = async (
   amount: BN
 ) => {
   // action starts
-  console.log(`\nLoading ${amount} ${resourceName} to fleet...`);
+  console.log(`\nLoading ${resourceName} to fleet...`);
 
   // data
   // ...
@@ -24,10 +24,6 @@ export const loadCargo = async (
       console.log("Your fleet cargo is full");
       return ix;
 
-    case "StarbaseCargoIsEmpty":
-      console.log("Starbase cargo is empty");
-      return ix;
-
     // blocking errors or failures that require retrying the entire action
     default:
       if (ix.type !== "Success") throw new Error(ix.type); // retry entire action
@@ -38,7 +34,7 @@ export const loadCargo = async (
   if (sdt.type !== "Success") throw new Error(sdt.type); // retry entire action
 
   // other
-  console.log("Fleet cargo loaded!");
+  console.log(`Fleet cargo loaded with ${ix.amountToDeposit} ${resourceName}!`);
 
   // action ends
   return { type: "Success" as const }
