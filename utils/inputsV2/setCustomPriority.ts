@@ -5,7 +5,7 @@ export const setCustomPriority = async () => {
       {
         type: "input",
         name: "customPriority",
-        message: "Set custom priority fee value (< 1000000):",
+        message: "Set custom priority fee value (<= 1000000):",
         default: 0,
         validate: (input: number) => {
             if (isNaN(input)) {

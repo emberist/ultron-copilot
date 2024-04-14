@@ -81,7 +81,7 @@ export enum PriorityLevelValue {
   Low = 10000,
   Medium = 100000,
   High = 500000,
-  MaxCustom = 1000000
+  Limit = 1000000
 }
 
 export type CustomPriorityFee = {

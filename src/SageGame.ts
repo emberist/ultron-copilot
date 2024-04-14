@@ -1145,7 +1145,7 @@ export class SageGame {
           (
             this.customPriorityFee.level === PriorityLevel.Custom && 
             this.customPriorityFee.value &&
-            this.customPriorityFee.value < PriorityLevelValue.MaxCustom
+            this.customPriorityFee.value < PriorityLevelValue.Limit
           ) ? this.customPriorityFee.value : 
           0;
 
@@ -1157,7 +1157,8 @@ export class SageGame {
       };
       
       const getLimit = async (transaction: VersionedTransaction, connection: Connection): Promise<number> => {
-        const unitLimit = (await getSimulationUnits(transaction, connection) || 150000) + 1500;
+        let unitLimit = (await getSimulationUnits(transaction, connection) || 150000) + 1500;
+        if (unitLimit > PriorityLevelValue.Limit) unitLimit = 1000000;
         // console.log("\nUnit Limit:", unitLimit, "CU");
         return unitLimit;
       };
