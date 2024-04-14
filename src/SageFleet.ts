@@ -763,8 +763,6 @@ export class SageFleet {
       const currentStarbase = this.getSageGame().getStarbaseBySector(fleetCurrentSector.data);
       if (currentStarbase.type !== "Success") return currentStarbase;
 
-      if (!this.state.Idle) return { type: "FleetIsNotIdle" as const };
-
       const starbasePlayerKey = this.player.getStarbasePlayerAddress(currentStarbase.data);
       const starbasePlayer = await this.player.getStarbasePlayerByStarbaseAsync(currentStarbase.data);
       if (starbasePlayer.type !== "Success") {
@@ -948,8 +946,6 @@ export class SageFleet {
       const currentStarbase = this.getSageGame().getStarbaseBySector(fleetCurrentSector.data);
       if (currentStarbase.type !== "Success") return currentStarbase;
 
-      if (!this.state.Idle) return { type: "FleetIsNotIdle" as const };
-
       const starbasePlayerKey = this.player.getStarbasePlayerAddress(currentStarbase.data);
       const starbasePlayer = await this.player.getStarbasePlayerByStarbaseAsync(currentStarbase.data);
       if (starbasePlayer.type !== "Success") {
@@ -1056,8 +1052,6 @@ export class SageFleet {
       const fuelMint = this.getSageGame().getResourceMintByName(ResourceName.Fuel);
       
       const fuelTank = this.getFuelTank()
-
-      if (!this.state.Idle) return { type: "FleetIsNotIdle" as const };
       
       const [fuelInTankData] = fuelTank.resources.filter((item) => item.mint.equals(fuelMint));
       if (!fuelInTankData) return { type: "FleetFuelTankIsEmpty" as const };
@@ -1103,8 +1097,6 @@ export class SageFleet {
       const fuelMint = this.getSageGame().getResourceMintByName(ResourceName.Fuel);
       
       const fuelTank = this.getFuelTank();
-
-      if (!this.state.Idle) return { type: "FleetIsNotIdle" as const };
       
       const [fuelInTankData] = fuelTank.resources.filter((item) => item.mint.equals(fuelMint));
       if (!fuelInTankData) return { type: "FleetFuelTankIsEmpty" as const };
@@ -1196,8 +1188,6 @@ export class SageFleet {
 
       const fleetCurrentSector = await this.getCurrentSectorAsync();
       if (fleetCurrentSector.type !== "Success") return fleetCurrentSector;
-
-      if (!this.state.Idle) return { type: "FleetIsNotIdle" as const };
 
       const cargoHold = this.getCargoHold();
 
