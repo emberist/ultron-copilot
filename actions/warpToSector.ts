@@ -39,8 +39,6 @@ export const warpToSector = async (
   console.log(`Waiting for ${timeToWarp} seconds...`);
   await wait(timeToWarp);
   console.log(`Warp completed!`);
-  
-  await fleet.getSageGame().getQuattrinoBalance();
 
   if (waitCooldown) {
     await wait(fleet.getMovementStats().warpCoolDown);

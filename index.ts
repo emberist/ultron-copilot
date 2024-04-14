@@ -19,7 +19,7 @@ import { scanV2 } from "./scripts/scanV2";
 import { setActivityV2 } from "./utils/inputsV2/setActivity";
 
 const test = async () => {
-  console.log(`Welcome to Ultron ${version}!`);
+  console.log(`Welcome to Ultron Copilot ${version}!`);
 
   const { startOption } = await setStart();
 
@@ -61,6 +61,10 @@ const test = async () => {
   }
 
   const player = await SagePlayer.init(sage, playerProfiles.data[0]);
+
+  const qttrBalance = await sage.getQuattrinoBalance();
+  if (qttrBalance.type !== "Success" || qttrBalance.data == 0) return;
+  console.log(qttrBalance.message)
 
   const activity = await setActivityV2();
 

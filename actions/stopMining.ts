@@ -30,7 +30,6 @@ export const stopMining = async (
 
   // other
   console.log(`Mining stopped!`);
-  await fleet.getSageGame().getQuattrinoBalance();
 
   // action ends
   return { type: "Success" as const }

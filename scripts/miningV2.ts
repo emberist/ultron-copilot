@@ -86,6 +86,19 @@ export const miningV2 = async (
 
   // 7. start mining loop
   for (let i = 0; i < cycles; i++) {
+    // 0. Dock to starbase (optional)
+    if (
+      !fleet.data.getCurrentState().StarbaseLoadingBay && 
+      fleet.data.getSageGame().getStarbaseBySector(fleetCurrentSector).type === "Success"
+    ) {
+      await actionWrapper(dockToStarbase, fleet.data);
+    } else if (
+      !fleet.data.getCurrentState().StarbaseLoadingBay && 
+      fleet.data.getSageGame().getStarbaseBySector(fleetCurrentSector).type !== "Success"
+    ) {
+      return fleet.data.getSageGame().getStarbaseBySector(fleetCurrentSector);
+    }
+    
     // 1. load fuel
     if (fuelTank.loadedAmount.lt(new BN(fuelNeeded))) {
       await actionWrapper(loadCargo, fleet.data, ResourceName.Fuel, CargoPodType.FuelTank, new BN(MAX_AMOUNT));

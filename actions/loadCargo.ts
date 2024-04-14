@@ -39,7 +39,6 @@ export const loadCargo = async (
 
   // other
   console.log("Fleet cargo loaded!");
-  await fleet.getSageGame().getQuattrinoBalance();
 
   // action ends
   return { type: "Success" as const }

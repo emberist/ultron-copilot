@@ -28,7 +28,6 @@ export const dockToStarbase = async (
 
   // other
   console.log("Fleet docked!");
-  await fleet.getSageGame().getQuattrinoBalance();
 
   // action ends
   return { type: "Success" as const }

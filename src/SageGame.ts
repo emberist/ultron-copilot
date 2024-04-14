@@ -1114,13 +1114,11 @@ export class SageGame {
       if (tokenBalance === 0) 
         return { type: "NoEnoughTokensToPerformLabsAction" as const };
 
-      return { type: "Success" as const, data: tokenBalance };
+      return { type: "Success" as const, data: tokenBalance, message: `You have ${tokenBalance} QTTR` };
     }
 
     private async buildDynamicTransactions(instructions: InstructionReturn[], fee: boolean) {
       if (fee) {
-        const tokenBalance = await this.getQuattrinoBalance();
-        if (tokenBalance.type !== "Success") return tokenBalance;
         instructions.push(this.ixBurnQuattrinoToken());
       }
 
@@ -1241,6 +1239,12 @@ export class SageGame {
       const RETRY_DELAY_MS = 10000;
       let attempts = 0;
       const txSignatures: string[] = [];
+
+      if (fee) {
+        const tokenBalance = await this.getQuattrinoBalance();
+        if (tokenBalance.type !== "Success") return tokenBalance;
+        console.log(tokenBalance.message);
+      }
       
       // Build transactions
       let buildTxs = await this.buildDynamicTransactions(instructions, fee);

@@ -28,7 +28,6 @@ export const undockFromStarbase = async (
 
   // other
   console.log("Fleet undocked!");
-  await fleet.getSageGame().getQuattrinoBalance();
 
   // action ends
   return { type: "Success" as const }

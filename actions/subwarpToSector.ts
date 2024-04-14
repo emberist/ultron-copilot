@@ -37,8 +37,6 @@ export const subwarpToSector = async (
   console.log(`Waiting for ${timeToSubwarp} seconds...`);
   await wait(timeToSubwarp);
   console.log(`Subwarp completed!`);
-  
-  await fleet.getSageGame().getQuattrinoBalance();
 
   // action ends
   return { type: "Success" as const }

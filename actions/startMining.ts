@@ -32,7 +32,6 @@ export const startMining = async (
 
   // other
   console.log(`Mining started! Waiting for ${time} seconds...`);
-  await fleet.getSageGame().getQuattrinoBalance();
   await wait(time);
 
   // action ends

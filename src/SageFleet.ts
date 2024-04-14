@@ -326,6 +326,8 @@ export class SageFleet {
     }
 
     private async update() {
+        await this.getSageGame().delay(5000); // wait five seconds before updating the fleet
+
         const fleet = await this.player.getFleetByKeyAsync(this.fleet.key);
         if (fleet.type !== "Success") return fleet;
 
@@ -348,8 +350,6 @@ export class SageFleet {
         this.ammoBank = ammoBank.data;
         this.cargoHold = cargoHold.data;
         this.currentSector = currentSector.data;
-
-        await this.getSageGame().delay(1000); // wait one seconds before updating the fleet
 
         return { type: "Success" as const };
     }
@@ -612,6 +612,8 @@ export class SageFleet {
       const currentStarbase = this.getSageGame().getStarbaseBySector(fleetCurrentSector.data);
       if (currentStarbase.type !== "Success") return currentStarbase;
 
+      if (!this.state.StarbaseLoadingBay) return { type: "FleetNotDockedToStarbase" as const };
+
       const starbasePlayerPod = await this.player.getStarbasePlayerPodAsync(currentStarbase.data);
       if (starbasePlayerPod.type !== "Success") return starbasePlayerPod; 
       // console.log(starbasePlayerPod)
@@ -690,6 +692,8 @@ export class SageFleet {
       const currentStarbase = this.getSageGame().getStarbaseBySector(fleetCurrentSector.data);
       if (currentStarbase.type !== "Success") return currentStarbase;
 
+      if (!this.state.StarbaseLoadingBay) return { type: "FleetNotDockedToStarbase" as const };
+
       const starbasePlayerPod = await this.player.getStarbasePlayerPodAsync(currentStarbase.data);
       if (starbasePlayerPod.type !== "Success") return starbasePlayerPod; 
       // console.log(starbasePlayerPod)
@@ -759,6 +763,8 @@ export class SageFleet {
       const currentStarbase = this.getSageGame().getStarbaseBySector(fleetCurrentSector.data);
       if (currentStarbase.type !== "Success") return currentStarbase;
 
+      if (!this.state.Idle) return { type: "FleetIsNotIdle" as const };
+
       const starbasePlayerKey = this.player.getStarbasePlayerAddress(currentStarbase.data);
       const starbasePlayer = await this.player.getStarbasePlayerByStarbaseAsync(currentStarbase.data);
       if (starbasePlayer.type !== "Success") {
@@ -825,8 +831,7 @@ export class SageFleet {
       const currentStarbase = this.getSageGame().getStarbaseBySector(fleetCurrentSector.data);
       if (currentStarbase.type !== "Success") return currentStarbase;
 
-      if (!this.fleet.state.MineAsteroid)
-      return { type: "FleetIsNotMiningAsteroid" as const };
+      if (!this.fleet.state.MineAsteroid) return { type: "FleetIsNotMiningAsteroid" as const };
       
       const planetKey = this.fleet.state.MineAsteroid.asteroid;
       const miningResourceKey = this.fleet.state.MineAsteroid.resource
@@ -943,6 +948,8 @@ export class SageFleet {
       const currentStarbase = this.getSageGame().getStarbaseBySector(fleetCurrentSector.data);
       if (currentStarbase.type !== "Success") return currentStarbase;
 
+      if (!this.state.Idle) return { type: "FleetIsNotIdle" as const };
+
       const starbasePlayerKey = this.player.getStarbasePlayerAddress(currentStarbase.data);
       const starbasePlayer = await this.player.getStarbasePlayerByStarbaseAsync(currentStarbase.data);
       if (starbasePlayer.type !== "Success") {
@@ -1017,6 +1024,8 @@ export class SageFleet {
       const currentStarbase = this.getSageGame().getStarbaseBySector(fleetCurrentSector.data);
       if (currentStarbase.type !== "Success") return currentStarbase;
 
+      if (!this.state.StarbaseLoadingBay) return { type: "FleetNotDockedToStarbase" as const };
+
       const starbasePlayerKey = this.player.getStarbasePlayerAddress(currentStarbase.data);
 
       const input: LoadingBayToIdleInput = 0;
@@ -1047,6 +1056,8 @@ export class SageFleet {
       const fuelMint = this.getSageGame().getResourceMintByName(ResourceName.Fuel);
       
       const fuelTank = this.getFuelTank()
+
+      if (!this.state.Idle) return { type: "FleetIsNotIdle" as const };
       
       const [fuelInTankData] = fuelTank.resources.filter((item) => item.mint.equals(fuelMint));
       if (!fuelInTankData) return { type: "FleetFuelTankIsEmpty" as const };
@@ -1092,6 +1103,8 @@ export class SageFleet {
       const fuelMint = this.getSageGame().getResourceMintByName(ResourceName.Fuel);
       
       const fuelTank = this.getFuelTank();
+
+      if (!this.state.Idle) return { type: "FleetIsNotIdle" as const };
       
       const [fuelInTankData] = fuelTank.resources.filter((item) => item.mint.equals(fuelMint));
       if (!fuelInTankData) return { type: "FleetFuelTankIsEmpty" as const };
@@ -1183,6 +1196,8 @@ export class SageFleet {
 
       const fleetCurrentSector = await this.getCurrentSectorAsync();
       if (fleetCurrentSector.type !== "Success") return fleetCurrentSector;
+
+      if (!this.state.Idle) return { type: "FleetIsNotIdle" as const };
 
       const cargoHold = this.getCargoHold();
 
