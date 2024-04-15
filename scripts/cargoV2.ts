@@ -29,7 +29,8 @@ export const cargoV2 = async (
   const fleet = await setFleetV2(player);
   if (fleet.type !== "Success") return fleet;
 
-  const fleetCurrentSector = await fleet.data.getCurrentSector();
+  const fleetCurrentSector = fleet.data.getCurrentSector();
+  if (fleetCurrentSector.type !== "Success") return fleetCurrentSector;
 
   // 3. set cargo sector
   const starbase = await setStarbaseV2(fleet.data, true);
@@ -47,21 +48,21 @@ export const cargoV2 = async (
   );
 
   // 5. set fleet movement type (->)
-  const movementGo = await setMovementTypeV2()
+  const movementGo = await setMovementTypeV2("(->)")
 
-  const [goRoute, goFuelNeeded] = fleet.data.calculateRouteToSector(
-    fleetCurrentSector, 
-    sector.data,
-    movementGo.movement
+  const [goRoute, goFuelNeeded] = await fleet.data.calculateRouteToSector(
+    fleetCurrentSector.data.coordinates as SectorCoordinates, 
+    sector.data.data.coordinates as SectorCoordinates,
+    movementGo?.movement,
   );
   
   // 6. set fleet movement type (<-) 
-  const movementBack = await setMovementTypeV2()
+  const movementBack = await setMovementTypeV2("(<-)")
 
-  const [backRoute, backFuelNeeded] = fleet.data.calculateRouteToSector(
-    sector.data, 
-    fleetCurrentSector,
-    movementBack.movement
+  const [backRoute, backFuelNeeded] = await fleet.data.calculateRouteToSector(
+    sector.data.data.coordinates as SectorCoordinates, 
+    fleetCurrentSector.data.coordinates as SectorCoordinates,
+    movementBack?.movement,
   );
   
   const fuelNeeded = (goFuelNeeded + Math.round(goFuelNeeded * 0.3)) + (backFuelNeeded + Math.round(backFuelNeeded * 0.3));
@@ -76,14 +77,14 @@ export const cargoV2 = async (
     // 0. Dock to starbase (optional)
     if (
       !fleet.data.getCurrentState().StarbaseLoadingBay && 
-      fleet.data.getSageGame().getStarbaseBySector(fleetCurrentSector).type === "Success"
+      fleet.data.getSageGame().getStarbaseByCoords(fleetCurrentSector.data.coordinates).type === "Success"
     ) {
       await actionWrapper(dockToStarbase, fleet.data);
     } else if (
       !fleet.data.getCurrentState().StarbaseLoadingBay && 
-      fleet.data.getSageGame().getStarbaseBySector(fleetCurrentSector).type !== "Success"
+      fleet.data.getSageGame().getStarbaseByCoords(fleetCurrentSector.data.coordinates).type !== "Success"
     ) {
-      return fleet.data.getSageGame().getStarbaseBySector(fleetCurrentSector);
+      return fleet.data.getSageGame().getStarbaseByCoords(fleetCurrentSector.data.coordinates);
     }
 
     // console.log(fuelTank.loadedAmount.toNumber(), fuelNeeded)
@@ -108,7 +109,7 @@ export const cargoV2 = async (
     if (movementGo && movementGo.movement === MovementType.Warp) {
       for (let i = 1; i < goRoute.length; i++) {
         const sectorTo = goRoute[i];
-        const warp = await actionWrapper(warpToSector, fleet.data, sectorTo, goFuelNeeded, false);
+        const warp = await actionWrapper(warpToSector, fleet.data, sectorTo, goFuelNeeded, true);
         if (warp.type !== "Success") {
           await actionWrapper(dockToStarbase, fleet.data);
           return warp;

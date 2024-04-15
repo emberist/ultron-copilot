@@ -23,7 +23,8 @@ export const setStarbaseV2 = async (
     return indexA - indexB;
   });
 
-  const fleetCurrentSector = await fleet.getCurrentSector();
+  const fleetCurrentSector = fleet.getCurrentSector();
+  if (fleetCurrentSector.type !== "Success") return fleetCurrentSector;
   
   const { starbase } = await inquirer.prompt<{ starbase: Starbase }>([
     {

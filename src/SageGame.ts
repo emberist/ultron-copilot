@@ -427,8 +427,10 @@ export class SageGame {
       return this.sectors;
     }
 
+    // !! It seems that a Sector account it's created only when a player visit a sector
     async getSectorByCoordsAsync(sectorCoords: SectorCoordinates | [BN,BN]) {
       const [sectorKey] = Sector.findAddress(this.sageProgram, this.game.key, sectorCoords);
+      console.log(sectorKey.toBase58())
       try {
         const sectorAccount = await readFromRPCOrError(
           this.provider.connection,
@@ -466,6 +468,11 @@ export class SageGame {
       } else {
         return { type: "SectorNotFound" as const };
       }
+    }
+
+    getSectorKeyByCoords(sectorCoords: SectorCoordinates | [BN,BN]) {
+      const [sectorKey] = Sector.findAddress(this.sageProgram, this.game.key, sectorCoords);
+      return sectorKey;
     }
 
     getSectorByKey(sectorKey: PublicKey) {
@@ -535,14 +542,10 @@ export class SageGame {
       return this.planets;
     }
 
-    private getPlanetsByCoords(coordinates: SectorCoordinates | [BN,BN], planetType?: PlanetType) {
-      return this.planets.filter((planet) => !planetType ? 
+    getPlanetsByCoords(coordinates: SectorCoordinates | [BN,BN], planetType?: PlanetType) {
+      const planets = this.planets.filter((planet) => !planetType ? 
         this.bnArraysEqual(planet.data.sector as SectorCoordinates, coordinates) : 
         this.bnArraysEqual(planet.data.sector as SectorCoordinates, coordinates) && planet.data.planetType === planetType);
-    }
-
-    getPlanetsBySector(sector: Sector, planetType?: PlanetType) {
-      const planets = this.getPlanetsByCoords(sector.data.coordinates as SectorCoordinates, planetType);
 
       if (planets) {
         return { type: "Success" as const, data: planets };
@@ -550,6 +553,16 @@ export class SageGame {
         return { type: "PlanetsNotFound" as const };
       }
     }
+
+    /* private getPlanetsBySector(sector: Sector, planetType?: PlanetType) {
+      const planets = this.getPlanetsByCoords(sector.data.coordinates as SectorCoordinates, planetType);
+
+      if (planets) {
+        return { type: "Success" as const, data: planets };
+      } else {
+        return { type: "PlanetsNotFound" as const };
+      }
+    } */
 
     getPlanetByKey(planetKey: PublicKey) {
       const planet = this.planets.find((planet) => planet.key.equals(planetKey))
@@ -1076,11 +1089,11 @@ export class SageGame {
       return cargoType;
     }
 
-    private calculateDistanceByCoords(a: SectorCoordinates | [BN,BN], b: SectorCoordinates | [BN,BN]) {
+    calculateDistanceByCoords(a: SectorCoordinates | [BN,BN], b: SectorCoordinates | [BN,BN]) {
       return calculateDistance(a,b);
     }
 
-    calculateDistanceBySector(a: Sector, b: Sector) {
+    private calculateDistanceBySector(a: Sector, b: Sector) {
       return calculateDistance(a.data.coordinates as [BN, BN], b.data.coordinates as [BN, BN]);
     }
 

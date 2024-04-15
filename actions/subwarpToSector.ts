@@ -1,18 +1,21 @@
 import { wait } from "../utils/actions/wait";
 import { Sector } from "@staratlas/sage";
-import { SageFleet } from "../src/SageFleet";
+import { SageFleet, SectorRoute } from "../src/SageFleet";
 import { BN } from "@staratlas/anchor";
 
 export const subwarpToSector = async (
   fleet: SageFleet,
-  sector: Sector,
+  sector: SectorRoute,
   fuelNeeded: number,
 ) => {
   // action starts
   console.log(`\nStart subwarp...`);
 
   // data
-  const sectorsDistance = fleet.getSageGame().calculateDistanceBySector(fleet.getCurrentSector(), sector);
+  const fleetCurrentSector = fleet.getCurrentSector();
+  if (fleetCurrentSector.type !== "Success") return fleetCurrentSector;
+
+  const sectorsDistance = fleet.getSageGame().calculateDistanceByCoords(fleetCurrentSector.data.coordinates, sector.coordinates);
   const timeToSubwarp = fleet.calculateSubwarpTimeWithDistance(sectorsDistance);
 
   // instruction

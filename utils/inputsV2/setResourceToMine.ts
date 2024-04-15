@@ -3,12 +3,13 @@ import { PlanetType, Sector } from "@staratlas/sage";
 import { SageFleet } from "../../src/SageFleet";
 import { byteArrayToString } from "@staratlas/data-source";
 import { MinableResource } from "../../src/SageGame";
+import { SectorCoordinates } from "../../common/types";
 
 export const setResourceToMine = async (
     fleet: SageFleet,
     sector: Sector
   ) => {
-    const planet = fleet.getSageGame().getPlanetsBySector(sector, PlanetType.AsteroidBelt);
+    const planet = fleet.getSageGame().getPlanetsByCoords(sector.data.coordinates as SectorCoordinates, PlanetType.AsteroidBelt);
     if (planet.type !== "Success") return planet;
     
     const asteroid = planet.data[0]

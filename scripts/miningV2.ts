@@ -31,7 +31,8 @@ export const miningV2 = async (
   const fleet = await setFleetV2(player);
   if (fleet.type !== "Success") return fleet;
 
-  const fleetCurrentSector = await fleet.data.getCurrentSector();
+  const fleetCurrentSector = fleet.data.getCurrentSector();
+  if (fleetCurrentSector.type !== "Success") return fleetCurrentSector;
 
   // 3. set mining sector
   const starbase = await setStarbaseV2(fleet.data);
@@ -40,7 +41,7 @@ export const miningV2 = async (
   const sector = player.getSageGame().getSectorByCoords(starbase.data.data.sector as SectorCoordinates);
   if (sector.type !== "Success") return sector;
 
-  const isSameSector = fleetCurrentSector.key.equals(sector.data.key);
+  const isSameSector = fleetCurrentSector.data.key.equals(sector.data.key);
 
   // 4. set mining resource
   const resourceToMine = await setResourceToMine(fleet.data, sector.data);
@@ -55,22 +56,22 @@ export const miningV2 = async (
   let movementGo, movementBack;
   if (!isSameSector) {
     // 5. set fleet movement type (->)
-    movementGo = await setMovementTypeV2()
+    movementGo = await setMovementTypeV2("(->)")
 
     // 6. set fleet movement type (<-) 
-    movementBack = await setMovementTypeV2()
+    movementBack = await setMovementTypeV2("(<-)")
   }
 
   // 5 & 6. calculate routes and fuel needed
-  const [goRoute, goFuelNeeded] = fleet.data.calculateRouteToSector(
-    fleetCurrentSector, 
-    sector.data,
+  const [goRoute, goFuelNeeded] = await fleet.data.calculateRouteToSector(
+    fleetCurrentSector.data.coordinates as SectorCoordinates, 
+    sector.data.data.coordinates as SectorCoordinates,
     movementGo?.movement,
   );
   
-  const [backRoute, backFuelNeeded] = fleet.data.calculateRouteToSector(
-    sector.data, 
-    fleetCurrentSector,
+  const [backRoute, backFuelNeeded] = await fleet.data.calculateRouteToSector(
+    sector.data.data.coordinates as SectorCoordinates, 
+    fleetCurrentSector.data.coordinates as SectorCoordinates,
     movementBack?.movement,
   );
   
@@ -91,14 +92,14 @@ export const miningV2 = async (
     // 0. Dock to starbase (optional)
     if (
       !fleet.data.getCurrentState().StarbaseLoadingBay && 
-      fleet.data.getSageGame().getStarbaseBySector(fleetCurrentSector).type === "Success"
+      fleet.data.getSageGame().getStarbaseByCoords(fleetCurrentSector.data.coordinates).type === "Success"
     ) {
       await actionWrapper(dockToStarbase, fleet.data);
     } else if (
       !fleet.data.getCurrentState().StarbaseLoadingBay && 
-      fleet.data.getSageGame().getStarbaseBySector(fleetCurrentSector).type !== "Success"
+      fleet.data.getSageGame().getStarbaseByCoords(fleetCurrentSector.data.coordinates).type !== "Success"
     ) {
-      return fleet.data.getSageGame().getStarbaseBySector(fleetCurrentSector);
+      return fleet.data.getSageGame().getStarbaseByCoords(fleetCurrentSector.data.coordinates);
     }
 
     // 1. load fuel
@@ -127,7 +128,7 @@ export const miningV2 = async (
     if (!isSameSector && movementGo && movementGo.movement === MovementType.Warp) {
       for (let i = 1; i < goRoute.length; i++) {
         const sectorTo = goRoute[i];
-        const warp = await actionWrapper(warpToSector, fleet.data, sectorTo, goFuelNeeded, false);
+        const warp = await actionWrapper(warpToSector, fleet.data, sectorTo, goFuelNeeded, i < goRoute.length - 1);
         if (warp.type !== "Success") {
           await actionWrapper(dockToStarbase, fleet.data);
           return warp;
