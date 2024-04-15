@@ -46,9 +46,6 @@ export const cargoV2 = async (
     "Enter resources to freight in CURRENT starbase (ex: Hydrogen 2000). Press enter to skip:"
   );
 
-  const effectiveResourcesGo: InputResourcesForCargo[] = [];
-  const effectiveResourcesBack: InputResourcesForCargo[] = [];
-
   // 5. set fleet movement type (->)
   const movementGo = await setMovementTypeV2()
 
@@ -70,10 +67,10 @@ export const cargoV2 = async (
   const fuelNeeded = (goFuelNeeded + Math.round(goFuelNeeded * 0.3)) + (backFuelNeeded + Math.round(backFuelNeeded * 0.3));
   // console.log("Fuel needed:", fuelNeeded);
 
-  const fuelTank = await fleet.data.getFuelTank();
-
   // 7. start cargo loop
   for (let i = 0; i < cycles; i++) {
+    const fuelTank = fleet.data.getFuelTank();
+
     if (new BN(fuelNeeded).gt(fuelTank.maxCapacity)) return { type: "NotEnoughFuelCapacity" as const };
 
     // 0. Dock to starbase (optional)
@@ -96,6 +93,8 @@ export const cargoV2 = async (
     }
 
     // 2. load cargo go
+    const effectiveResourcesGo: InputResourcesForCargo[] = [];
+
     for (const item of resourcesGo) {
       const loading = await actionWrapper(loadCargo, fleet.data, item.resource, CargoPodType.CargoHold, new BN(item.amount));
       if (loading.type === "Success")
@@ -135,6 +134,8 @@ export const cargoV2 = async (
     }
     
     // 8. load cargo back
+    const effectiveResourcesBack: InputResourcesForCargo[] = [];
+    
     for (const item of resourcesBack) {
       const loading = await actionWrapper(loadCargo, fleet.data, item.resource, CargoPodType.CargoHold, new BN(item.amount));
       if (loading.type === "Success")

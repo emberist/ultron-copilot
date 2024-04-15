@@ -48,8 +48,6 @@ export const cargoMiningV2 = async (
     "Enter resources to freight in starbase DESTINATION (e.g., Carbon 5000), or press enter to skip:"
   );
 
-  const effectiveResourcesGo: InputResourcesForCargo[] = [];
-
   // 5. set mining resource
   const resourceToMine = await setResourceToMine(fleet.data, sector.data);
   if (resourceToMine.type !== "Success") return resourceToMine;
@@ -85,15 +83,15 @@ export const cargoMiningV2 = async (
   const fuelNeeded = miningSessionData.fuelNeeded + (goFuelNeeded + Math.round(goFuelNeeded * 0.3)) + (backFuelNeeded + Math.round(backFuelNeeded * 0.3));
   // console.log("Fuel needed:", fuelNeeded);
 
-  const fuelTank = fleet.data.getFuelTank();
-
-  const ammoBank = fleet.data.getAmmoBank()
-
-  const cargoHold = fleet.data.getCargoHold();
-  const [foodInCargoData] = cargoHold.resources.filter((item) => item.mint.equals(fleet.data.getSageGame().getResourcesMint().Food));
-
   // 8. start cargo mining loop
   for (let i = 0; i < cycles; i++) {
+    const fuelTank = fleet.data.getFuelTank();
+
+    const ammoBank = fleet.data.getAmmoBank()
+
+    const cargoHold = fleet.data.getCargoHold();
+    const [foodInCargoData] = cargoHold.resources.filter((item) => item.mint.equals(fleet.data.getSageGame().getResourcesMint().Food));
+
     if (new BN(fuelNeeded).gt(fuelTank.maxCapacity)) return { type: "NotEnoughFuelCapacity" as const };
 
     // 0. Dock to starbase (optional)
@@ -110,6 +108,7 @@ export const cargoMiningV2 = async (
     }
 
     // 1. load fuel
+    console.log(fuelTank.loadedAmount.toNumber(), fuelNeeded)
     if (fuelTank.loadedAmount.lt(new BN(fuelNeeded))) {
       await actionWrapper(loadCargo, fleet.data, ResourceName.Fuel, CargoPodType.FuelTank, new BN(MAX_AMOUNT));
     }
@@ -129,6 +128,8 @@ export const cargoMiningV2 = async (
     }
 
     // 4. load cargo go
+    const effectiveResourcesGo: InputResourcesForCargo[] = [];
+    
     for (const item of resourcesGo) {
       const loading = await actionWrapper(loadCargo, fleet.data, item.resource, CargoPodType.CargoHold, new BN(item.amount));
       if (loading.type === "Success")

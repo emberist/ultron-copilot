@@ -1129,11 +1129,7 @@ export class SageGame {
       return { type: "Success" as const, data: tokenBalance, message: `You have ${tokenBalance} QTTR` };
     }
 
-    private async buildDynamicTransactions(instructions: InstructionReturn[], fee: boolean) {
-      if (fee) {
-        instructions.push(this.ixBurnQuattrinoToken());
-      }
-
+    private async buildDynamicTransactions(instructions: InstructionReturn[]) {
       const getFee = async (writableAccounts: PublicKey[], connection: Connection): Promise<number> => {
         if (this.customPriorityFee.level === PriorityLevel.None) return 0;
         
@@ -1259,11 +1255,12 @@ export class SageGame {
       if (fee) {
         const tokenBalance = await this.getQuattrinoBalance();
         if (tokenBalance.type !== "Success") return tokenBalance;
+        instructions.push(this.ixBurnQuattrinoToken());
         console.log(tokenBalance.message);
       }
       
       // Build transactions
-      let buildTxs = await this.buildDynamicTransactions(instructions, fee);
+      let buildTxs = await this.buildDynamicTransactions(instructions);
       if (buildTxs.type !== "Success") return buildTxs;
       
       let toProcess = buildTxs.data;
@@ -1283,7 +1280,7 @@ export class SageGame {
                   // console.error(result)
                   const reason = this.parseError(result.reason);
                   console.error(`> Transaction #${i} failed on attempt ${attempts + 1}: ${reason}`);
-                  const newBuild = await this.buildDynamicTransactions(instructions, fee);
+                  const newBuild = await this.buildDynamicTransactions(instructions);
                   if (newBuild.type === "Success") {
                       toProcess.push(newBuild.data[i]);
                   } else {
@@ -1293,7 +1290,7 @@ export class SageGame {
               // If transaction sent, confirmed but not OK
               else if (result.status === "fulfilled" && !result.value.value.isOk()) {
                   console.error(`> Transaction #${i} completed but not OK, rebuilding and retrying...`);
-                  const newBuild = await this.buildDynamicTransactions(instructions, fee);
+                  const newBuild = await this.buildDynamicTransactions(instructions);
                   if (newBuild.type === "Success") {
                       toProcess.push(newBuild.data[i]);
                   } else {

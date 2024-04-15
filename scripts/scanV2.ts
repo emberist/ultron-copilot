@@ -64,10 +64,10 @@ export const scanV2 = async (
   const fuelNeeded = (goFuelNeeded + Math.round(goFuelNeeded * 0.3)) + (backFuelNeeded + Math.round(backFuelNeeded * 0.3));
   // console.log("Fuel needed:", fuelNeeded);
 
-  const fuelTank = fleet.data.getFuelTank();
-
   // 6. start scan loop
   for (let i = 0; i < cycles; i++) {
+    const fuelTank = fleet.data.getFuelTank();
+  
     if (new BN(fuelNeeded).gt(fuelTank.maxCapacity)) return { type: "NotEnoughFuelCapacity" as const };
 
     // 0. Dock to starbase (optional)
