@@ -474,7 +474,8 @@ export class SageFleet {
     private createWarpRoute(sectorFrom: Sector, sectorTo: Sector) { 
       const start: Node = {x: sectorFrom.data.coordinates[0].toNumber(), y: sectorFrom.data.coordinates[1].toNumber(), cost: 0, distance: 0, f: 0};
       const goal: Node = {x: sectorTo.data.coordinates[0].toNumber(), y: sectorTo.data.coordinates[1].toNumber(), cost: 0, distance: 0, f: 0};
-      const criticalPoints = this.aStarPathfindingWithRestStops(start, goal, this.getMovementStats().maxWarpDistance);
+      // console.log(this.getMovementStats().maxWarpDistance)
+      const criticalPoints = this.aStarPathfindingWithRestStops(start, goal, this.getMovementStats().maxWarpDistance / 100);
   
       const sectorRoute: Sector[] = [];
       criticalPoints.forEach(node => {
