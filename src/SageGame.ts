@@ -430,7 +430,7 @@ export class SageGame {
     // !! It seems that a Sector account it's created only when a player visit a sector
     async getSectorByCoordsAsync(sectorCoords: SectorCoordinates | [BN,BN]) {
       const [sectorKey] = Sector.findAddress(this.sageProgram, this.game.key, sectorCoords);
-      console.log(sectorKey.toBase58())
+      //console.log(sectorKey.toBase58())
       try {
         const sectorAccount = await readFromRPCOrError(
           this.provider.connection,

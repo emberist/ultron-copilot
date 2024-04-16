@@ -14,10 +14,13 @@ import { cargoV2 } from "./scripts/cargoV2";
 import { setPriority } from "./utils/inputsV2/setPriority";
 import { PriorityLevel } from "./common/constants";
 import { setCustomPriority } from "./utils/inputsV2/setCustomPriority";
-import { cargoMiningV2 } from "./scripts/cargoMiningV2";
+import { comboV2 } from "./scripts/comboV2";
 import { scanV2 } from "./scripts/scanV2";
 import { setActivityV2 } from "./utils/inputsV2/setActivity";
 import { setPlayerProfile } from "./utils/inputsV2/setPlayerProfile";
+import { startMining } from "./prescripts/startMining";
+import { startCargo } from "./prescripts/startCargo";
+import { startScan } from "./prescripts/startScan";
 
 const test = async () => {
   console.log(`Welcome to Ultron Copilot ${version}!`);
@@ -82,7 +85,7 @@ const test = async () => {
   switch (activity) {
     case "Mining":
       // 5. Play with mining
-      const mining = await miningV2(player);
+      const mining = await startMining(player);
       if (mining.type !== "Success") {
         console.log("Mining failed.", mining.type)
         return;
@@ -91,7 +94,7 @@ const test = async () => {
 
     case "Cargo":
       // 6. Play with cargo
-      const cargo = await cargoV2(player);
+      const cargo = await startCargo(player);
       if (cargo.type !== "Success") {
         console.log("Cargo failed.", cargo.type)
         return;
@@ -100,16 +103,16 @@ const test = async () => {
 
     case "Combo":
       // 7. Play with cargo mining
-      const cargoMining = await cargoMiningV2(player);
-      if (cargoMining.type !== "Success") {
-        console.log("Cargo mining failed.", cargoMining.type)
+      const combo = await startCargo(player);
+      if (combo.type !== "Success") {
+        console.log("Cargo mining failed.", combo.type)
         return;
       }
       break;
 
     case "Scan":
       // 8. Play with scanning
-      const scan = await scanV2(player);
+      const scan = await startScan(player);
       if (scan.type !== "Success") {
         console.log("\nScan failed.", scan.type)
         return;

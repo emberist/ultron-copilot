@@ -13,9 +13,9 @@ export const subwarpToSector = async (
 
   // data
   const fleetCurrentSector = fleet.getCurrentSector();
-  if (fleetCurrentSector.type !== "Success") return fleetCurrentSector;
+  if (!fleetCurrentSector) return { type: "FleetCurrentSectorError" as const };
 
-  const sectorsDistance = fleet.getSageGame().calculateDistanceByCoords(fleetCurrentSector.data.coordinates, sector.coordinates);
+  const sectorsDistance = fleet.getSageGame().calculateDistanceByCoords(fleetCurrentSector.coordinates, sector.coordinates);
   const timeToSubwarp = fleet.calculateSubwarpTimeWithDistance(sectorsDistance);
 
   // instruction

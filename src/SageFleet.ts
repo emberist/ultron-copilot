@@ -103,8 +103,8 @@ export class SageFleet {
       ])
       if (ships.type !== "Success") throw new Error(ships.type);
 
-      const currentSector = sageFleet.getCurrentSector();
-      if (currentSector.type !== "Success") throw new Error(currentSector.type);
+      /* const currentSector = sageFleet.getCurrentSector();
+      if (!currentSector) return { type: "FleetCurrentSectorError" as const }; */
 
       sageFleet.fuelTank = fuelTank.data;
       sageFleet.ammoBank = ammoBank.data;
@@ -203,47 +203,46 @@ export class SageFleet {
         if (this.fleet.state.MoveWarp) {
           coordinates = this.fleet.state.MoveWarp.toSector as SectorCoordinates;
           const sectorRoute: SectorRoute = { key: this.getSageGame().getSectorKeyByCoords(coordinates), coordinates };
-          return { type: "Success" as const, data: sectorRoute };
+          return sectorRoute;
         }
 
         if (this.fleet.state.MoveSubwarp) {
           coordinates = this.fleet.state.MoveSubwarp.toSector as SectorCoordinates;
           const sectorRoute: SectorRoute = { key: this.getSageGame().getSectorKeyByCoords(coordinates), coordinates };
-          return { type: "Success" as const, data: sectorRoute };
+          return sectorRoute
         }
       
         if (this.fleet.state.StarbaseLoadingBay) {
           const starbase = this.getSageGame().getStarbaseByKey(this.fleet.state.StarbaseLoadingBay.starbase);
-          if (starbase.type !== "Success") return starbase;
+          if (starbase.type !== "Success") return null;
 
           coordinates = starbase.data.data.sector as SectorCoordinates;
           const sectorRoute: SectorRoute = { key: this.getSageGame().getSectorKeyByCoords(coordinates), coordinates };
-          return { type: "Success" as const, data: sectorRoute };
+          return sectorRoute;
         }
       
         if (this.fleet.state.Idle) {
-          // console.log("OK3")
           coordinates = this.fleet.state.Idle.sector as SectorCoordinates;
           const sectorRoute: SectorRoute = { key: this.getSageGame().getSectorKeyByCoords(coordinates), coordinates };
-          return { type: "Success" as const, data: sectorRoute };
+          return sectorRoute;
         }
       
         if (this.fleet.state.Respawn) {
           coordinates = this.fleet.state.Respawn.sector as SectorCoordinates;
           const sectorRoute: SectorRoute = { key: this.getSageGame().getSectorKeyByCoords(coordinates), coordinates };
-          return { type: "Success" as const, data: sectorRoute };
+          return sectorRoute;
         }
 
         if (this.fleet.state.MineAsteroid) {
           const planet = this.getSageGame().getPlanetByKey(this.fleet.state.MineAsteroid.asteroid);
-          if (planet.type !== "Success") return planet;
+          if (planet.type !== "Success") return null;
 
           coordinates = planet.data.data.sector as SectorCoordinates;
           const sectorRoute: SectorRoute = { key: this.getSageGame().getSectorKeyByCoords(coordinates), coordinates };
-          return { type: "Success" as const, data: sectorRoute };
+          return sectorRoute;
         }
       
-        return { type: "FleetStateError" as const };
+        return null;
     };
 
     /* getCurrentSector() {
@@ -628,9 +627,9 @@ export class SageFleet {
       const resourceSpaceInCargoPerUnit = cargoType.data.stats[0] as BN;
 
       const fleetCurrentSector = this.getCurrentSector();
-      if (fleetCurrentSector.type !== "Success") return fleetCurrentSector;
+      if (!fleetCurrentSector) return { type: "FleetCurrentSectorError" as const };
 
-      const currentStarbase = this.getSageGame().getStarbaseByCoords(fleetCurrentSector.data.coordinates);
+      const currentStarbase = this.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates);
       if (currentStarbase.type !== "Success") return currentStarbase;
 
       if (!this.state.StarbaseLoadingBay) return { type: "FleetNotDockedToStarbase" as const };
@@ -708,9 +707,9 @@ export class SageFleet {
       const mint = this.getSageGame().getResourceMintByName(resourceName);
 
       const fleetCurrentSector = this.getCurrentSector();
-      if (fleetCurrentSector.type !== "Success") return fleetCurrentSector;
+      if (!fleetCurrentSector) return { type: "FleetCurrentSectorError" as const };
 
-      const currentStarbase = this.getSageGame().getStarbaseByCoords(fleetCurrentSector.data.coordinates);
+      const currentStarbase = this.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates);
       if (currentStarbase.type !== "Success") return currentStarbase;
 
       if (!this.state.StarbaseLoadingBay) return { type: "FleetNotDockedToStarbase" as const };
@@ -777,9 +776,9 @@ export class SageFleet {
       const ixs: InstructionReturn[] = [];
 
       const fleetCurrentSector = this.getCurrentSector();
-      if (fleetCurrentSector.type !== "Success") return fleetCurrentSector;
+      if (!fleetCurrentSector) return { type: "FleetCurrentSectorError" as const };
 
-      const currentStarbase = this.getSageGame().getStarbaseByCoords(fleetCurrentSector.data.coordinates);
+      const currentStarbase = this.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates);
       if (currentStarbase.type !== "Success") return currentStarbase;
 
       const starbasePlayerKey = this.player.getStarbasePlayerAddress(currentStarbase.data);
@@ -796,12 +795,12 @@ export class SageFleet {
         );
         ixs.push(ix_0);
       }
-      console.log(fleetCurrentSector.data.coordinates)
-      const currentPlanet = this.getSageGame().getPlanetsByCoords(fleetCurrentSector.data.coordinates, PlanetType.AsteroidBelt);
+      //console.log(fleetCurrentSector.coordinates)
+      const currentPlanet = this.getSageGame().getPlanetsByCoords(fleetCurrentSector.coordinates, PlanetType.AsteroidBelt);
       if (currentPlanet.type !== "Success") return currentPlanet;
-      console.log(currentPlanet)
+      //console.log(currentPlanet)
       const mineableResource = this.getSageGame().getMineItemAndResourceByNameAndPlanetKey(resourceName, currentPlanet.data[0].key);
-      console.log(mineableResource)
+      //console.log(mineableResource)
       const fuelTank = this.getFuelTank()
 
       const [fuelInTankData] = fuelTank.resources.filter((item) => item.mint.equals(this.getSageGame().getResourcesMint().Fuel));
@@ -843,9 +842,9 @@ export class SageFleet {
       const ixs: InstructionReturn[] = [];
 
       const fleetCurrentSector = this.getCurrentSector();
-      if (fleetCurrentSector.type !== "Success") return fleetCurrentSector;
+      if (!fleetCurrentSector) return { type: "FleetCurrentSectorError" as const };
 
-      const currentStarbase = this.getSageGame().getStarbaseByCoords(fleetCurrentSector.data.coordinates);
+      const currentStarbase = this.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates);
       if (currentStarbase.type !== "Success") return currentStarbase;
 
       if (!this.fleet.state.MineAsteroid) return { type: "FleetIsNotMiningAsteroid" as const };
@@ -957,14 +956,14 @@ export class SageFleet {
       const ixs: InstructionReturn[] = [];
       
       const fleetCurrentSector = this.getCurrentSector();
-      if (fleetCurrentSector.type !== "Success") return fleetCurrentSector;
+      if (!fleetCurrentSector) return { type: "FleetCurrentSectorError" as const };
       /* console.log(
         "FleetCurrentSector:", 
         fleetCurrentSector.data.coordinates[0].toNumber(),
         fleetCurrentSector.data.coordinates[1].toNumber()
       ) */
 
-      const currentStarbase = this.getSageGame().getStarbaseByCoords(fleetCurrentSector.data.coordinates);
+      const currentStarbase = this.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates);
       if (currentStarbase.type !== "Success") return currentStarbase;
 
       const starbasePlayerKey = this.player.getStarbasePlayerAddress(currentStarbase.data);
@@ -1043,9 +1042,9 @@ export class SageFleet {
       const ixs: InstructionReturn[] = [];
 
       const fleetCurrentSector = await this.getCurrentSector();
-      if (fleetCurrentSector.type !== "Success") return fleetCurrentSector;
+      if (!fleetCurrentSector) return { type: "FleetCurrentSectorError" as const };
 
-      const currentStarbase = this.getSageGame().getStarbaseByCoords(fleetCurrentSector.data.coordinates);
+      const currentStarbase = this.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates);
       if (currentStarbase.type !== "Success") return currentStarbase;
 
       if (!this.state.StarbaseLoadingBay) return { type: "FleetNotDockedToStarbase" as const };
@@ -1215,7 +1214,7 @@ export class SageFleet {
       const sduMint = this.getSageGame().getResourceMintByName(ResourceName.Sdu)
 
       const fleetCurrentSector = this.getCurrentSector();
-      if (fleetCurrentSector.type !== "Success") return fleetCurrentSector;
+      if (!fleetCurrentSector) return { type: "FleetCurrentSectorError" as const };
 
       const cargoHold = this.getCargoHold();
 
@@ -1265,7 +1264,7 @@ export class SageFleet {
         this.player.getPlayerProfile().key,
         this.player.getProfileFactionAddress(),
         this.fleet.key,
-        fleetCurrentSector.data.key,
+        fleetCurrentSector.key,
         this.getSageGame().getSuvreyDataUnitTracker().key,
         cargoHold.key,
         this.getSageGame().getCargoTypeByResourceName(ResourceName.Sdu),

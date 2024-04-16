@@ -6,178 +6,135 @@ import { unloadCargo } from "../actions/unloadCargo";
 import { warpToSector } from "../actions/warpToSector";
 import { MAX_AMOUNT, MovementType } from "../common/constants";
 import { NotificationMessage } from "../common/notifications";
-import { InputResourcesForCargo, SectorCoordinates } from "../common/types";
+import { InputResourcesForCargo } from "../common/types";
 import { actionWrapper } from "../utils/actions/actionWrapper";
 import { sendNotification } from "../utils/actions/sendNotification";
-import { SagePlayer } from "../src/SagePlayer";
-import { setFleetV2 } from "../utils/inputsV2/setFleet";
-import { setCycles } from "../utils/inputs/setCycles";
-import { setStarbaseV2 } from "../utils/inputsV2/setStarbase";
-import { setMovementTypeV2 } from "../utils/inputsV2/setMovementType";
 import { BN } from "@staratlas/anchor";
 import { ResourceName } from "../src/SageGame";
-import { CargoPodType } from "../src/SageFleet";
-import { setResourcesAmountV2 } from "../utils/inputsV2/setResourcesAmount";
+import { CargoPodType, SageFleet, SectorRoute } from "../src/SageFleet";
 
 export const cargoV2 = async (
-  player: SagePlayer,
+  fleet: SageFleet,
+  fuelNeeded: number,
+  resourcesGo: InputResourcesForCargo[],
+  movementGo: MovementType,
+  goRoute: SectorRoute[],
+  goFuelNeeded: number,
+  resourcesBack: InputResourcesForCargo[],
+  movementBack: MovementType,
+  backRoute: SectorRoute[],
+  backFuelNeeded: number,
 ) => {
-  // 1. set cycles
-  const cycles = await setCycles();
+    const fleetCurrentSector = fleet.getCurrentSector();
+    if (!fleetCurrentSector) return { type: "FleetCurrentSectorError" as const };
 
-  // 2. set fleet
-  const fleet = await setFleetV2(player);
-  if (fleet.type !== "Success") return fleet;
-
-  const fleetCurrentSector = fleet.data.getCurrentSector();
-  if (fleetCurrentSector.type !== "Success") return fleetCurrentSector;
-
-  // 3. set cargo sector
-  const starbase = await setStarbaseV2(fleet.data, true);
-  if (starbase.type !== "Success") return starbase;
-
-  const sector = player.getSageGame().getSectorByCoords(starbase.data.data.sector as SectorCoordinates);
-  if (sector.type !== "Success") return sector;
-
-  // 4. set cargo resource allocation
-  const resourcesGo = await setResourcesAmountV2(
-    "Enter resources to freight in starbase DESTINATION (e.g., Carbon 5000), or press enter to skip:"
-  );
-  const resourcesBack = await setResourcesAmountV2(
-    "Enter resources to freight in CURRENT starbase (ex: Hydrogen 2000). Press enter to skip:"
-  );
-
-  // 5. set fleet movement type (->)
-  const movementGo = await setMovementTypeV2("(->)")
-
-  const [goRoute, goFuelNeeded] = await fleet.data.calculateRouteToSector(
-    fleetCurrentSector.data.coordinates as SectorCoordinates, 
-    sector.data.data.coordinates as SectorCoordinates,
-    movementGo?.movement,
-  );
-  
-  // 6. set fleet movement type (<-) 
-  const movementBack = await setMovementTypeV2("(<-)")
-
-  const [backRoute, backFuelNeeded] = await fleet.data.calculateRouteToSector(
-    sector.data.data.coordinates as SectorCoordinates, 
-    fleetCurrentSector.data.coordinates as SectorCoordinates,
-    movementBack?.movement,
-  );
-  
-  const fuelNeeded = (goFuelNeeded + Math.round(goFuelNeeded * 0.3)) + (backFuelNeeded + Math.round(backFuelNeeded * 0.3));
-  // console.log("Fuel needed:", fuelNeeded);
-
-  // 7. start cargo loop
-  for (let i = 0; i < cycles; i++) {
-    const fuelTank = fleet.data.getFuelTank();
+    const fuelTank = fleet.getFuelTank();
 
     if (new BN(fuelNeeded).gt(fuelTank.maxCapacity)) return { type: "NotEnoughFuelCapacity" as const };
 
     // 0. Dock to starbase (optional)
     if (
-      !fleet.data.getCurrentState().StarbaseLoadingBay && 
-      fleet.data.getSageGame().getStarbaseByCoords(fleetCurrentSector.data.coordinates).type === "Success"
+      !fleet.getCurrentState().StarbaseLoadingBay && 
+      fleet.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates).type === "Success"
     ) {
-      await actionWrapper(dockToStarbase, fleet.data);
+      await actionWrapper(dockToStarbase, fleet);
     } else if (
-      !fleet.data.getCurrentState().StarbaseLoadingBay && 
-      fleet.data.getSageGame().getStarbaseByCoords(fleetCurrentSector.data.coordinates).type !== "Success"
+      !fleet.getCurrentState().StarbaseLoadingBay && 
+      fleet.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates).type !== "Success"
     ) {
-      return fleet.data.getSageGame().getStarbaseByCoords(fleetCurrentSector.data.coordinates);
+      return fleet.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates);
     }
 
     // console.log(fuelTank.loadedAmount.toNumber(), fuelNeeded)
     // 1. load fuel
     if (fuelTank.loadedAmount.lt(new BN(fuelNeeded))) {
-      await actionWrapper(loadCargo, fleet.data, ResourceName.Fuel, CargoPodType.FuelTank, new BN(MAX_AMOUNT));
+      await actionWrapper(loadCargo, fleet, ResourceName.Fuel, CargoPodType.FuelTank, new BN(MAX_AMOUNT));
     }
 
     // 2. load cargo go
     const effectiveResourcesGo: InputResourcesForCargo[] = [];
 
     for (const item of resourcesGo) {
-      const loading = await actionWrapper(loadCargo, fleet.data, item.resource, CargoPodType.CargoHold, new BN(item.amount));
+      const loading = await actionWrapper(loadCargo, fleet, item.resource, CargoPodType.CargoHold, new BN(item.amount));
       if (loading.type === "Success")
         effectiveResourcesGo.push(item);
     }
     
     // 4. undock from starbase
-    await actionWrapper(undockFromStarbase, fleet.data);
+    await actionWrapper(undockFromStarbase, fleet);
 
     // 5. move to sector (->)
-    if (movementGo && movementGo.movement === MovementType.Warp) {
+    if (movementGo === MovementType.Warp) {
       for (let i = 1; i < goRoute.length; i++) {
         const sectorTo = goRoute[i];
-        const warp = await actionWrapper(warpToSector, fleet.data, sectorTo, goFuelNeeded, true);
+        const warp = await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, true);
         if (warp.type !== "Success") {
-          await actionWrapper(dockToStarbase, fleet.data);
+          await actionWrapper(dockToStarbase, fleet);
           return warp;
         }
       }   
     }
 
-    if (movementGo && movementGo.movement === MovementType.Subwarp) {
+    if (movementGo === MovementType.Subwarp) {
       const sectorTo = goRoute[1];
-      const subwarp = await actionWrapper(subwarpToSector, fleet.data, sectorTo, goFuelNeeded);
+      const subwarp = await actionWrapper(subwarpToSector, fleet, sectorTo, goFuelNeeded);
       if (subwarp.type !== "Success") {
-        await actionWrapper(dockToStarbase, fleet.data);
+        await actionWrapper(dockToStarbase, fleet);
         return subwarp;
       }
     }
 
     // 6. dock to starbase
-    await actionWrapper(dockToStarbase, fleet.data);
+    await actionWrapper(dockToStarbase, fleet);
 
     // 7. unload cargo go
     for (const item of effectiveResourcesGo) {
-      await actionWrapper(unloadCargo, fleet.data, item.resource, CargoPodType.CargoHold, new BN(item.amount));
+      await actionWrapper(unloadCargo, fleet, item.resource, CargoPodType.CargoHold, new BN(item.amount));
     }
     
     // 8. load cargo back
     const effectiveResourcesBack: InputResourcesForCargo[] = [];
     
     for (const item of resourcesBack) {
-      const loading = await actionWrapper(loadCargo, fleet.data, item.resource, CargoPodType.CargoHold, new BN(item.amount));
+      const loading = await actionWrapper(loadCargo, fleet, item.resource, CargoPodType.CargoHold, new BN(item.amount));
       if (loading.type === "Success")
         effectiveResourcesBack.push(item);
     }
 
     // 9. undock from starbase
-    await actionWrapper(undockFromStarbase, fleet.data);
+    await actionWrapper(undockFromStarbase, fleet);
 
     // 10. move to sector (<-)
-    if (movementBack && movementBack.movement === MovementType.Warp) {
+    if (movementBack === MovementType.Warp) {
       for (let i = 1; i < backRoute.length; i++) {
         const sectorTo = backRoute[i];
-        const warp = await actionWrapper(warpToSector, fleet.data, sectorTo, backFuelNeeded, true);
+        const warp = await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, true);
         if (warp.type !== "Success") {
-          await actionWrapper(dockToStarbase, fleet.data);
+          await actionWrapper(dockToStarbase, fleet);
           return warp;
         }
       }   
     }
 
-    if (movementBack && movementBack.movement === MovementType.Subwarp) {
-      const sectorTo = backRoute[i];
-      const subwarp = await actionWrapper(subwarpToSector, fleet.data, sectorTo, backFuelNeeded);
+    if (movementBack === MovementType.Subwarp) {
+      const sectorTo = backRoute[1];
+      const subwarp = await actionWrapper(subwarpToSector, fleet, sectorTo, backFuelNeeded);
       if (subwarp.type !== "Success") {
-        await actionWrapper(dockToStarbase, fleet.data);
+        await actionWrapper(dockToStarbase, fleet);
         return subwarp;
       }
     }
 
     // 11. dock to starbase
-    await actionWrapper(dockToStarbase, fleet.data);
+    await actionWrapper(dockToStarbase, fleet);
 
     // 12. unload cargo back
     for (const item of effectiveResourcesBack) {
-      await actionWrapper(unloadCargo, fleet.data, item.resource, CargoPodType.CargoHold, new BN(item.amount));
+      await actionWrapper(unloadCargo, fleet, item.resource, CargoPodType.CargoHold, new BN(item.amount));
     }
 
     // 13. send notification
-    await sendNotification(NotificationMessage.CARGO_SUCCESS, fleet.data.getName());
-  }
+    await sendNotification(NotificationMessage.CARGO_SUCCESS, fleet.getName());
 
-  return { type: "Success" as const };
+    return { type: "Success" as const };
 };

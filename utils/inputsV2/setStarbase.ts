@@ -24,7 +24,7 @@ export const setStarbaseV2 = async (
   });
 
   const fleetCurrentSector = fleet.getCurrentSector();
-  if (fleetCurrentSector.type !== "Success") return fleetCurrentSector;
+  if (!fleetCurrentSector) return { type: "FleetCurrentSectorError" as const };
   
   const { starbase } = await inquirer.prompt<{ starbase: Starbase }>([
     {
@@ -33,12 +33,12 @@ export const setStarbaseV2 = async (
       message: "Choose the starbase destination:",
       choices: !excludeFleetCurrentStarbase
         ? starbases.map((starbase) => ({
-            name: fleet.getSageGame().bnArraysEqual(starbase.data.data.sector, fleetCurrentSector.data.coordinates) ? 
+            name: fleet.getSageGame().bnArraysEqual(starbase.data.data.sector, fleetCurrentSector.coordinates) ? 
               `${starbase.prettyName} - ${byteArrayToString(starbase.data.data.name)} (current starbase)` : 
               `${starbase.prettyName} - ${byteArrayToString(starbase.data.data.name)}`,
             value: starbase.data,
           }))
-        : starbases.filter((starbase) => !fleet.getSageGame().bnArraysEqual(starbase.data.data.sector, fleetCurrentSector.data.coordinates)).map((starbase) => ({
+        : starbases.filter((starbase) => !fleet.getSageGame().bnArraysEqual(starbase.data.data.sector, fleetCurrentSector.coordinates)).map((starbase) => ({
           name: `${starbase.prettyName} - ${byteArrayToString(starbase.data.data.name)}`,
           value: starbase.data,
         }))

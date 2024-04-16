@@ -10,6 +10,7 @@ export class SagePlayer {
 
     private sageGame: SageGame;
     private playerProfile!: PlayerProfile;
+    // private profileFaction!: ProfileFactionAccount;
 
     private key: PublicKey;
     private userPoints!: UserPoints[];
