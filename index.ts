@@ -9,18 +9,15 @@ import { inputProfile } from "./utils/inputs/inputProfile";
 import { resetProfile } from "./utils/inputs/resetProfile";
 import { setStart } from "./utils/inputs/setStart";
 import { setupProfileData } from "./utils/inputs/setupProfileData";
-import { miningV2 } from "./scripts/miningV2";
-import { cargoV2 } from "./scripts/cargoV2";
 import { setPriority } from "./utils/inputsV2/setPriority";
 import { PriorityLevel } from "./common/constants";
 import { setCustomPriority } from "./utils/inputsV2/setCustomPriority";
-import { comboV2 } from "./scripts/comboV2";
-import { scanV2 } from "./scripts/scanV2";
 import { setActivityV2 } from "./utils/inputsV2/setActivity";
 import { setPlayerProfile } from "./utils/inputsV2/setPlayerProfile";
 import { startMining } from "./prescripts/startMining";
 import { startCargo } from "./prescripts/startCargo";
 import { startScan } from "./prescripts/startScan";
+import { startCombo } from "./prescripts/startCombo";
 
 const test = async () => {
   console.log(`Welcome to Ultron Copilot ${version}!`);
@@ -103,9 +100,9 @@ const test = async () => {
 
     case "Combo":
       // 7. Play with cargo mining
-      const combo = await startCargo(player);
+      const combo = await startCombo(player);
       if (combo.type !== "Success") {
-        console.log("Cargo mining failed.", combo.type)
+        console.log("Combo failed.", combo.type)
         return;
       }
       break;
