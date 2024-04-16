@@ -207,7 +207,7 @@ export class SageFleet {
         }
 
         if (this.fleet.state.MoveSubwarp) {
-          coordinates = this.fleet.state.MoveSubwarp.currentSector as SectorCoordinates;
+          coordinates = this.fleet.state.MoveSubwarp.toSector as SectorCoordinates;
           const sectorRoute: SectorRoute = { key: this.getSageGame().getSectorKeyByCoords(coordinates), coordinates };
           return { type: "Success" as const, data: sectorRoute };
         }
@@ -796,12 +796,12 @@ export class SageFleet {
         );
         ixs.push(ix_0);
       }
-
+      console.log(fleetCurrentSector.data.coordinates)
       const currentPlanet = this.getSageGame().getPlanetsByCoords(fleetCurrentSector.data.coordinates, PlanetType.AsteroidBelt);
       if (currentPlanet.type !== "Success") return currentPlanet;
-
+      console.log(currentPlanet)
       const mineableResource = this.getSageGame().getMineItemAndResourceByNameAndPlanetKey(resourceName, currentPlanet.data[0].key);
-
+      console.log(mineableResource)
       const fuelTank = this.getFuelTank()
 
       const [fuelInTankData] = fuelTank.resources.filter((item) => item.mint.equals(this.getSageGame().getResourcesMint().Fuel));

@@ -1290,7 +1290,7 @@ export class SageGame {
 
               // If transaction failed to send
               if (result.status === "rejected") {
-                  console.error(result)
+                  // console.error(result)
                   const reason = this.parseError(result.reason);
                   console.error(`> Transaction #${i} failed on attempt ${attempts + 1}: ${reason}`);
                   const newBuild = await this.buildDynamicTransactions(instructions);
