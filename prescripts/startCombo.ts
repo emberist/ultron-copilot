@@ -1,6 +1,7 @@
 import { SectorCoordinates } from "../common/types";
 import { comboV2 } from "../scripts/comboV2";
 import { miningV2 } from "../scripts/miningV2";
+import { ResourceName } from "../src/SageGame";
 import { SagePlayer } from "../src/SagePlayer";
 import { setCycles } from "../utils/inputs/setCycles";
 import { setFleetV2 } from "../utils/inputsV2/setFleet";
@@ -28,6 +29,8 @@ export const startCombo = async (player: SagePlayer) => {
   if (sector.type !== "Success") return sector;
 
   // const isSameSector = fleetCurrentSector.key.equals(sector.data.key);
+
+  console.log(`Available resource names: ${Object.keys(ResourceName).join(", ")}`);
 
   // 4. set cargo resource allocation
   const resourcesGo = await setResourcesAmountV2(

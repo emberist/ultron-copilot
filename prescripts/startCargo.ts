@@ -1,5 +1,6 @@
 import { SectorCoordinates } from "../common/types";
 import { cargoV2 } from "../scripts/cargoV2";
+import { ResourceName } from "../src/SageGame";
 import { SagePlayer } from "../src/SagePlayer";
 import { setCycles } from "../utils/inputs/setCycles";
 import { setFleetV2 } from "../utils/inputsV2/setFleet";
@@ -26,6 +27,8 @@ export const startCargo = async (player: SagePlayer) => {
   if (sector.type !== "Success") return sector;
 
   // 4. set cargo resource allocation
+  console.log(`Available resource names: ${Object.keys(ResourceName).join(", ")}`);
+
   const resourcesGo = await setResourcesAmountV2(
     "Enter resources to freight in starbase DESTINATION (e.g., Carbon 5000), or press enter to skip:"
   );
