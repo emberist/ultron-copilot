@@ -25,8 +25,14 @@ export const subwarpToSector = async (
   switch (ix.type) {
     // issues that lead to the next action of the main script or the end of the script
     case "NoEnoughFuelToSubwarp":
-      return ix;
+      return { type: "NoEnoughFuelToSubwarp" as const };
     
+    case "FleetIsDocked":
+      return { type: "FleetIsDocked" as const };
+
+    case "FleetIsMining":
+      return { type: "FleetIsMining" as const };
+
     // blocking errors or failures that require retrying the entire action
     default:
       if (ix.type !== "Success") throw new Error(ix.type); // retry entire action

@@ -17,7 +17,8 @@ export const stopMining = async (
   // issues and errors handling
   switch (ix.type) {
     // issues that lead to the next action of the main script or the end of the script
-    // ...
+    case "FleetIsNotMiningAsteroid":
+      return { type: "FleetIsNotMiningAsteroid" as const };
     
     // blocking errors or failures that require retrying the entire action
     default:

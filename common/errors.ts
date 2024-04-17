@@ -19,9 +19,9 @@ export class BuildAndSignTransactionError extends Error {
   }
 }
 
-export class SendTransactionFailed extends Error {
+export class SendTransactionsFailed extends Error {
   constructor() {
-    super("SendTransactionFailed");
-    this.name = "SendTransactionFailed";
+    super("SendTransactionsFailed");
+    this.name = "SendTransactionsFailed";
   }
 }

@@ -50,7 +50,7 @@ export const miningV2 = async (
     !fleet.getCurrentState().StarbaseLoadingBay && 
     fleet.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates).type !== "Success"
   ) {
-    return fleet.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates);
+    return { type: "StarbaseNotFound" as const };
   }
 
   // 1. load fuel
@@ -73,7 +73,20 @@ export const miningV2 = async (
   }
   
   // 4. undock from starbase
-  await actionWrapper(undockFromStarbase, fleet);
+  const undock = await actionWrapper(undockFromStarbase, fleet);
+  if (undock.type !== "Success") {
+    switch (undock.type) {
+      case "FleetIsIdle":
+        break;
+      case "FleetIsMining":
+        await actionWrapper(stopMining, fleet, resourceToMine);
+        break;
+      case "FleetIsMoving":
+        break;
+      default:
+        return undock;
+    }
+  }
 
   // 5. move to sector (->)
   if (movementGo && movementGo === MovementType.Warp && goRoute && goFuelNeeded) {
@@ -81,8 +94,18 @@ export const miningV2 = async (
       const sectorTo = goRoute[i];
       const warp = await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, i < goRoute.length - 1);
       if (warp.type !== "Success") {
-        await actionWrapper(dockToStarbase, fleet);
-        return warp;
+        switch (warp.type) {
+          case "FleetIsDocked":
+            await actionWrapper(undockFromStarbase, fleet);
+            await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, i < goRoute.length - 1);
+            break;
+          case "FleetIsMining":
+            await actionWrapper(stopMining, fleet, resourceToMine);
+            await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, i < goRoute.length - 1);
+            break;
+          default:
+            return warp;
+        }
       }
     }   
   }
@@ -91,16 +114,46 @@ export const miningV2 = async (
     const sectorTo = goRoute[1];
     const subwarp = await actionWrapper(subwarpToSector, fleet, sectorTo, goFuelNeeded);
     if (subwarp.type !== "Success") {
-      await actionWrapper(dockToStarbase, fleet);
-      return subwarp;
+      switch (subwarp.type) {
+        case "FleetIsDocked":
+          await actionWrapper(undockFromStarbase, fleet);
+          await actionWrapper(subwarpToSector, fleet, sectorTo, goFuelNeeded);
+          break;
+        case "FleetIsMining":
+          await actionWrapper(stopMining, fleet, resourceToMine);
+          await actionWrapper(subwarpToSector, fleet, sectorTo, goFuelNeeded);
+          break;
+        default:
+          return subwarp;
+      }
     }
   }
 
   // 6. start mining
-  await actionWrapper(startMining, fleet, resourceToMine, mineTime);
+  const mining = await actionWrapper(startMining, fleet, resourceToMine, mineTime);
+  if (mining.type !== "Success") {
+    switch (mining.type) {
+      case "FleetIsDocked":
+        await actionWrapper(undockFromStarbase, fleet);
+        await actionWrapper(startMining, fleet, resourceToMine, mineTime);
+        break;
+      case "FleetIsMining":
+        break;
+      default:
+        return mining;
+    }
+  }
 
   // 7. stop mining
-  await actionWrapper(stopMining, fleet, resourceToMine);
+  const stop = await actionWrapper(stopMining, fleet, resourceToMine);
+  if (stop.type !== "Success") {
+    switch (stop.type) {
+      case "FleetIsNotMiningAsteroid":
+        break;
+      default:
+        return stop;
+    }
+  }
 
   // 8. move to sector (<-)
   if (movementBack && movementBack === MovementType.Warp && backRoute && backFuelNeeded) {
@@ -108,8 +161,18 @@ export const miningV2 = async (
       const sectorTo = backRoute[i];
       const warp = await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, true);
       if (warp.type !== "Success") {
-        await actionWrapper(dockToStarbase, fleet);
-        return warp;
+        switch (warp.type) {
+          case "FleetIsDocked":
+            await actionWrapper(undockFromStarbase, fleet);
+            await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, true);
+            break;
+          case "FleetIsMining":
+            await actionWrapper(stopMining, fleet, resourceToMine);
+            await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, true);
+            break;
+          default:
+            return warp;
+        }
       }
     }   
   }
@@ -118,13 +181,35 @@ export const miningV2 = async (
     const sectorTo = backRoute[1];
     const subwarp = await actionWrapper(subwarpToSector, fleet, sectorTo, backFuelNeeded);
     if (subwarp.type !== "Success") {
-      await actionWrapper(dockToStarbase, fleet);
-      return subwarp;
+      switch (subwarp.type) {
+        case "FleetIsDocked":
+          await actionWrapper(undockFromStarbase, fleet);
+          await actionWrapper(subwarpToSector, fleet, sectorTo, backFuelNeeded);
+          break;
+        case "FleetIsMining":
+          await actionWrapper(stopMining, fleet, resourceToMine);
+          await actionWrapper(subwarpToSector, fleet, sectorTo, backFuelNeeded);
+          break;
+        default:
+          return subwarp;
+      }
     }
   }
 
   // 9. dock to starbase
-  await actionWrapper(dockToStarbase, fleet);
+  const dock = await actionWrapper(dockToStarbase, fleet);
+  if (dock.type !== "Success") {
+    switch (dock.type) {
+      case "FleetIsMining":
+        await actionWrapper(stopMining, fleet, resourceToMine);
+        await actionWrapper(dockToStarbase, fleet);
+        break;
+      case "FleetIsDocked":
+        break;
+      default:
+        return dock;
+    }
+  }
 
   // 10. unload cargo
   await actionWrapper(unloadCargo, fleet, resourceToMine, CargoPodType.CargoHold, new BN(MAX_AMOUNT));

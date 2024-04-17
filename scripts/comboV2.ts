@@ -56,7 +56,7 @@ export const comboV2 = async (
   }
 
   // 1. load fuel
-  console.log(fuelTank.loadedAmount.toNumber(), fuelNeeded)
+  // console.log(fuelTank.loadedAmount.toNumber(), fuelNeeded)
   if (fuelTank.loadedAmount.lt(new BN(fuelNeeded))) {
     await actionWrapper(loadCargo, fleet, ResourceName.Fuel, CargoPodType.FuelTank, new BN(MAX_AMOUNT));
   }

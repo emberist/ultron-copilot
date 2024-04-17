@@ -22,7 +22,7 @@ export const loadCargo = async (
     // issues that lead to the next action of the main script or the end of the script
     case "FleetCargoPodIsFull":
       console.log("Your fleet cargo is full");
-      return ix;
+      return { type: "FleetCargoPodIsFull" as const };
 
     // blocking errors or failures that require retrying the entire action
     default:

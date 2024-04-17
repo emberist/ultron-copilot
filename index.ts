@@ -53,11 +53,16 @@ const test = async () => {
     const keypair = await getKeypairFromSecret(profile);
 
     // 1. Setup environment (SageGame.ts) [keypair required]
-    return await SageGame.init(keypair, connection.data, { level: priorityFees.priority, value: customPriority });
+    try {
+      const game = await SageGame.init(keypair, connection.data, { level: priorityFees.priority, value: customPriority });
+      return game;
+    } catch (err) {
+      return;
+    }
   })();
 
   if (!sage) {
-    console.log("Failed to initialize Sage Game. Please check the configurations and network connection.");
+    console.log("Unable to initialize Sage Game. Check your configuration and network connection (IMPORTANT: this could also be an ongoing SAGE update or an rpc error).");
     return;
   }
 

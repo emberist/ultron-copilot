@@ -26,7 +26,13 @@ export const warpToSector = async (
   switch (ix.type) {
     // issues that lead to the next action of the main script or the end of the script
     case "NoEnoughFuelToWarp":
-      return ix;
+      return { type: "NoEnoughFuelToWarp" as const };
+
+    case "FleetIsDocked":
+      return { type: "FleetIsDocked" as const };
+
+    case "FleetIsMining":
+      return { type: "FleetIsMining" as const };
     
     // blocking errors or failures that require retrying the entire action
     default:

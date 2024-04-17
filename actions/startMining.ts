@@ -19,7 +19,11 @@ export const startMining = async (
   // issues and errors handling
   switch (ix.type) {
     // issues that lead to the next action of the main script or the end of the script
-    // ...
+    case "FleetIsMining":
+      return { type: "FleetIsMining" as const };
+
+    case "FleetIsDocked":
+      return { type: "FleetIsDocked" as const };
     
     // blocking errors or failures that require retrying the entire action
     default:
@@ -32,7 +36,7 @@ export const startMining = async (
 
   // other
   console.log(`Mining started! Waiting for ${time} seconds...`);
-  await wait(time);
+  await wait(60);
 
   // action ends
   return { type: "Success" as const }

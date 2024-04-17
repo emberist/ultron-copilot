@@ -19,11 +19,17 @@ export const scanSdu = async (
     // issues that lead to the next action of the main script or the end of the script
     case "NoEnoughFood":
       console.log("No enough food to scan");
-      return ix;
+      return { type: "NoEnoughFood" as const };
 
     case "FleetCargoIsFull":
       console.log("Your fleet cargo is full");
-      return ix;
+      return { type: "FleetCargoIsFull" as const };
+
+    case "FleetIsDocked":
+      return { type: "FleetIsDocked" as const };
+
+    case "FleetIsMining":
+      return { type: "FleetIsMining" as const };
 
     // blocking errors or failures that require retrying the entire action
     default:

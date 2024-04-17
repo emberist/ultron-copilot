@@ -15,7 +15,14 @@ export const undockFromStarbase = async (
   // issues and errors handling
   switch (ix.type) {
     // issues that lead to the next action of the main script or the end of the script
-    // ...
+    case "FleetIsIdle":
+      return { type: "FleetIsIdle" as const };
+
+    case "FleetIsMining":
+      return { type: "FleetIsMining" as const };
+
+    case "FleetIsMoving":
+      return { type: "FleetIsMoving" as const };
     
     // blocking errors or failures that require retrying the entire action
     default:

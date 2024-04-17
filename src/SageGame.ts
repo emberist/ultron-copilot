@@ -1195,7 +1195,8 @@ export class SageGame {
     async buildAndSendDynamicTransactions(instructions: InstructionReturn[], fee: boolean) {
       const commitment: Finality = "finalized";
       const maxAttemps = 10;
-      const retryDelayMs = 10000;
+      const initDelayMs = 10000;
+      let delayMs = initDelayMs;
       let attempts = 0;
       const txSignatures: string[] = [];
 
@@ -1248,7 +1249,7 @@ export class SageGame {
               else if (result.status === "fulfilled" && result.value.value.isOk()) {
                   try {
                     const parsedTx = await this.connection.getParsedTransaction(result.value.value.value, { commitment, maxSupportedTransactionVersion: 0 });
-                    console.log(`> Transaction #${i} completed! ${parsedTx && parsedTx.meta ? `Fee: ${parsedTx.meta?.fee / LAMPORTS_PER_SOL}` : ""} SOL`);
+                    console.log(`> Transaction #${i} completed! ${parsedTx && parsedTx.meta ? `Fee: ${parsedTx.meta?.fee / LAMPORTS_PER_SOL} SOL` : ""}`);
                     txSignatures.push(result.value.value.value);
                   } catch (e) {
                     console.log(`> Transaction #${i} completed!`);
@@ -1260,14 +1261,15 @@ export class SageGame {
 
           attempts++;
           if (toProcess.length > 0 && attempts < maxAttemps) {
-              console.log(`\nWaiting ${retryDelayMs / 1000} seconds for next attempt...`);
-              await this.delay(retryDelayMs);
+              console.log(`\nWaiting ${delayMs / 1000} seconds for next attempt...`);
+              await this.delay(delayMs);
+              delayMs = delayMs + 5000;
           }
       }
     
       return txSignatures.length === buildTxs.data.length
           ? { type: "Success" as const, data: txSignatures }
-          : { type: "SendTransactionsFailure" as const };
+          : { type: "SendTransactionsFailed" as const };
     }
 
     private async sendAllTransactions(transactions: TransactionReturn[], commitment: Finality) {

@@ -618,6 +618,8 @@ export class SageFleet {
       const update = await this.update();
       if (update.type !== "Success") return { type: "FleetFailedToUpdate" as const };
 
+      if (!this.state.StarbaseLoadingBay) return { type: "FleetNotDockedToStarbase" as const };
+
       const ixs: InstructionReturn[] = [];
       const mint = this.getSageGame().getResourceMintByName(resourceName);
 
@@ -631,8 +633,6 @@ export class SageFleet {
 
       const currentStarbase = this.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates);
       if (currentStarbase.type !== "Success") return currentStarbase;
-
-      if (!this.state.StarbaseLoadingBay) return { type: "FleetNotDockedToStarbase" as const };
 
       const starbasePlayerPod = await this.player.getStarbasePlayerPodAsync(currentStarbase.data);
       if (starbasePlayerPod.type !== "Success") return starbasePlayerPod; 
@@ -703,6 +703,8 @@ export class SageFleet {
       const update = await this.update();
       if (update.type !== "Success") return { type: "FleetFailedToUpdate" as const };
 
+      if (!this.state.StarbaseLoadingBay) return { type: "FleetNotDockedToStarbase" as const };
+
       const ixs: InstructionReturn[] = [];
       const mint = this.getSageGame().getResourceMintByName(resourceName);
 
@@ -711,8 +713,6 @@ export class SageFleet {
 
       const currentStarbase = this.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates);
       if (currentStarbase.type !== "Success") return currentStarbase;
-
-      if (!this.state.StarbaseLoadingBay) return { type: "FleetNotDockedToStarbase" as const };
 
       const starbasePlayerPod = await this.player.getStarbasePlayerPodAsync(currentStarbase.data);
       if (starbasePlayerPod.type !== "Success") return starbasePlayerPod; 
@@ -772,6 +772,9 @@ export class SageFleet {
     async ixStartMining(resourceName: ResourceName) {
       const update = await this.update();
       if (update.type !== "Success") return { type: "FleetFailedToUpdate" as const };
+
+      if (this.state.MineAsteroid) return { type: "FleetIsMining" as const };
+      if (this.state.StarbaseLoadingBay) return { type: "FleetIsDocked" as const };
 
       const ixs: InstructionReturn[] = [];
 
@@ -839,6 +842,8 @@ export class SageFleet {
       const update = await this.update();
       if (update.type !== "Success") return { type: "FleetFailedToUpdate" as const };
 
+      if (!this.fleet.state.MineAsteroid) return { type: "FleetIsNotMiningAsteroid" as const };
+
       const ixs: InstructionReturn[] = [];
 
       const fleetCurrentSector = this.getCurrentSector();
@@ -846,8 +851,6 @@ export class SageFleet {
 
       const currentStarbase = this.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates);
       if (currentStarbase.type !== "Success") return currentStarbase;
-
-      if (!this.fleet.state.MineAsteroid) return { type: "FleetIsNotMiningAsteroid" as const };
       
       const planetKey = this.fleet.state.MineAsteroid.asteroid;
       const miningResourceKey = this.fleet.state.MineAsteroid.resource
@@ -951,17 +954,13 @@ export class SageFleet {
       const update = await this.update();
       if (update.type !== "Success") return { type: "FleetFailedToUpdate" as const };
       
-      if (!this.state.Idle && !this.state.MoveWarp && !this.state.MoveSubwarp) return { type: "FleetIsNotIdle" as const };
+      if (this.state.StarbaseLoadingBay) return { type: "FleetIsDocked" as const };
+      if (this.state.MineAsteroid) return { type: "FleetIsMining" as const };
 
       const ixs: InstructionReturn[] = [];
       
       const fleetCurrentSector = this.getCurrentSector();
       if (!fleetCurrentSector) return { type: "FleetCurrentSectorError" as const };
-      /* console.log(
-        "FleetCurrentSector:", 
-        fleetCurrentSector.data.coordinates[0].toNumber(),
-        fleetCurrentSector.data.coordinates[1].toNumber()
-      ) */
 
       const currentStarbase = this.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates);
       if (currentStarbase.type !== "Success") return currentStarbase;
@@ -1039,6 +1038,10 @@ export class SageFleet {
       const update = await this.update();
       if (update.type !== "Success") return { type: "FleetFailedToUpdate" as const };
 
+      if (this.state.Idle) return { type: "FleetIsIdle" as const };
+      if (this.state.MineAsteroid) return { type: "FleetIsMining" as const };
+      if (this.state.MoveWarp || this.state.MoveSubwarp) return { type: "FleetIsMoving" as const };
+
       const ixs: InstructionReturn[] = [];
 
       const fleetCurrentSector = await this.getCurrentSector();
@@ -1046,8 +1049,6 @@ export class SageFleet {
 
       const currentStarbase = this.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates);
       if (currentStarbase.type !== "Success") return currentStarbase;
-
-      if (!this.state.StarbaseLoadingBay) return { type: "FleetNotDockedToStarbase" as const };
 
       const starbasePlayerKey = this.player.getStarbasePlayerAddress(currentStarbase.data);
 
@@ -1073,6 +1074,9 @@ export class SageFleet {
     async ixWarpToSector(sector: SectorRoute, fuelNeeded: BN) {
       const update = await this.update();
       if (update.type !== "Success") return { type: "FleetFailedToUpdate" as const };
+
+      if (this.state.MineAsteroid) return { type: "FleetIsMining" as const };
+      if (this.state.StarbaseLoadingBay) return { type: "FleetIsDocked" as const };
 
       const ixs: InstructionReturn[] = [];
 
@@ -1118,6 +1122,9 @@ export class SageFleet {
     async ixSubwarpToSector(sector: SectorRoute, fuelNeeded: BN) {
       const update = await this.update();
       if (update.type !== "Success") return { type: "FleetFailedToUpdate" as const };
+
+      if (this.state.MineAsteroid) return { type: "FleetIsMining" as const };
+      if (this.state.StarbaseLoadingBay) return { type: "FleetIsDocked" as const };
       
       const ixs: InstructionReturn[] = [];
       
@@ -1208,6 +1215,9 @@ export class SageFleet {
       const update = await this.update();
       if (update.type !== "Success") return { type: "FleetFailedToUpdate" as const };
       
+      if (this.state.MineAsteroid) return { type: "FleetIsMining" as const };
+      if (this.state.StarbaseLoadingBay) return { type: "FleetIsDocked" as const };
+
       const ixs: InstructionReturn[] = [];
 
       const foodMint = this.getSageGame().getResourceMintByName(ResourceName.Food)
