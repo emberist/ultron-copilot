@@ -5,10 +5,10 @@ export class NoEnoughRepairKits extends Error {
   }
 }
 
-export class NoEnoughTokensToPerformLabsAction extends Error {
+export class NoEnoughTokensToPerformSageAction extends Error {
   constructor() {
-    super("NoEnoughTokensToPerformLabsAction");
-    this.name = "NoEnoughTokensToPerformLabsAction";
+    super("NoEnoughTokensToPerformSageAction");
+    this.name = "NoEnoughTokensToPerformSageAction";
   }
 }
 

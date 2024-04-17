@@ -29,30 +29,37 @@ const test = async () => {
     return;
   }
 
-  // qui l'utente configura il livello di priority fee desiderato e l'eventuale custom priority fee value
-  const priorityFees = await setPriority();
-  const { customPriority } = priorityFees.priority === PriorityLevel.Custom ? await setCustomPriority() : { customPriority: 0 }
+  const sage = await (async () => {
+    // qui l'utente configura il livello di priority fee desiderato e l'eventuale custom priority fee value
+    const priorityFees = await setPriority();
+    const { customPriority } = priorityFees.priority === PriorityLevel.Custom ? await setCustomPriority() : { customPriority: 0 }
 
-  // qui l'utente sceglie il profilo desiderato
-  const { profile } = await inputProfile();
+    // qui l'utente sceglie il profilo desiderato
+    const { profile } = await inputProfile();
 
-  // qui si controlla se il profilo esiste già, se no, lo si crea
-  await setupProfileData(profile);
+    // qui si controlla se il profilo esiste già, se no, lo si crea
+    await setupProfileData(profile);
 
-  // qui si impostano il keypair e la connection
-  const keypair = await getKeypairFromSecret(profile);
+    // qui si imposta la connessione
+    const connection = getConnection(profile);
 
-  const connection = getConnection(profile);
+    // FIX: se la connessione non è andata a buon fine, Ultron riprova
+    if (connection.type !== "Success") {
+      console.log("Connection failed, please retry.")
+      return;
+    }
 
-  // FIX: se la connessione non è andata a buon fine, Ultron riprova
-  if (connection.type !== "Success") {
-    console.log("Connection failed, please retry.")
+    // qui si imposta il keypir
+    const keypair = await getKeypairFromSecret(profile);
+
+    // 1. Setup environment (SageGame.ts) [keypair required]
+    return await SageGame.init(keypair, connection.data, { level: priorityFees.priority, value: customPriority });
+  })();
+
+  if (!sage) {
+    console.log("Failed to initialize Sage Game. Please check the configurations and network connection.");
     return;
   }
-
-  // 1. Setup environment (SageGame.ts) [keypair required]
-  const sage = await SageGame.init(keypair, connection.data, { level: priorityFees.priority, value: customPriority });
-  // console.log(sage.getGame().data)
 
   // 2. Setup player (SagePlayer.ts)
   const playerProfiles = await sage.getPlayerProfilesAsync();
@@ -69,7 +76,11 @@ const test = async () => {
 
   // 3. Check if player has enough Quattrini
   const qttrBalance = await sage.getQuattrinoBalance();
-  if (qttrBalance.type !== "Success" || qttrBalance.data == 0) return;
+  if (qttrBalance.type !== "Success" || qttrBalance.data == 0) {
+    console.log(qttrBalance.message)
+    return;
+  };
+
   console.log(qttrBalance.message)
 
   // 4. Set activity

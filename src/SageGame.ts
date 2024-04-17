@@ -1,5 +1,5 @@
 import { Provider, AnchorProvider, Program, Wallet, BN } from "@staratlas/anchor";
-import { Connection, Finality, Keypair, PublicKey, VersionedTransaction, } from "@solana/web3.js";
+import { Connection, Finality, Keypair, LAMPORTS_PER_SOL, PublicKey, VersionedTransaction, } from "@solana/web3.js";
 import { readFromRPCOrError, readAllFromRPC, stringToByteArray, InstructionReturn } from "@staratlas/data-source";
 import { PLAYER_PROFILE_IDL, PlayerProfileIDLProgram, } from "@staratlas/player-profile";
 import { Fleet, Game, GameState, MineItem, Planet, PlanetType, Points, Resource, SAGE_IDL, SageIDLProgram, Sector, Star, Starbase, SurveyDataUnitTracker, calculateDistance, getCargoPodsByAuthority, sageErrorMap } from "@staratlas/sage";
@@ -1130,16 +1130,20 @@ export class SageGame {
     }
   
     async getQuattrinoBalance() {
-      const fromATA = getAssociatedTokenAddressSync(
-        quattrinoTokenPubkey,
-        this.funder.publicKey()
-      );
-      const tokenBalance = await this.getTokenAccountBalance(fromATA);
+      try {
+        const fromATA = getAssociatedTokenAddressSync(
+          quattrinoTokenPubkey,
+          this.funder.publicKey()
+        );
+        const tokenBalance = await this.getTokenAccountBalance(fromATA);
 
-      if (tokenBalance === 0) 
-        return { type: "NoEnoughTokensToPerformLabsAction" as const };
+        if (tokenBalance === 0) 
+          return { type: "NoEnoughTokensToPerformSageAction" as const, message: "You don't have enough QTTR. Please buy some and try again" };
 
-      return { type: "Success" as const, data: tokenBalance, message: `You have ${tokenBalance} QTTR` };
+        return { type: "Success" as const, data: tokenBalance, message: `You have ${tokenBalance} QTTR` };
+      } catch (e) {
+        return { type: "UnableToLoadBalance" as const, message: "Unable to fetch QTTR balance. If you don't have any QTTR in your wallet, please buy some and try again" };
+      }
     }
 
     private async buildDynamicTransactions(instructions: InstructionReturn[]) {
@@ -1188,80 +1192,10 @@ export class SageGame {
       return { type: "Success" as const, data: txs.value };
     }
 
-    /* async sendDynamicTransactions(instructions: InstructionReturn[], fee: boolean) {
-      const commitment: Finality = "confirmed";
-      let attempts = 0;
-      const maxAttempts = 3;
-      const txSignatures: string[] = [];
-      
-      let buildTxs = await this.buildDynamicTransactions(instructions, fee);
-      if (buildTxs.type !== "Success") return buildTxs;
-      
-      let toProcess = buildTxs.data;
-    
-      while (toProcess.length > 0 && attempts < maxAttempts) {
-        const results = await Promise.allSettled(
-          toProcess.map(tx => sendTransaction(tx, this.connection, {
-            commitment,
-            sendOptions: {
-              skipPreflight: false,
-              preflightCommitment: "confirmed",
-            },
-          }))
-        );
-    
-        toProcess = [];
-    
-        console.log(" ");
-        results.forEach(async (result, index) => {
-          if (result.status === "rejected") {
-            let reason;
-
-            const errorCode = result.reason && result.reason.message ? parseInt(result.reason.message.split(" ").pop().trim()) : null;
-            if (errorCode && errorCode >= 6000 && result.reason.logs && result.reason.logs.length > 6) {
-              const errorMessage: string[] = result.reason.logs[6].split(".");
-              reason = errorMessage.slice(1, errorMessage.length - 1).map(item => item.trim()).join(" - ");
-            } else {
-              const error = result.reason as SolanaJSONRPCError
-              reason = error.message[error.message.length - 1];
-            }
-
-            console.error(`Transaction #${index} failed on attempt ${attempts + 1} with error: ${reason}`);
-
-            if (buildTxs.type === "Success")
-              toProcess.push(buildTxs.data[index]);
-          } else if (result.status === "fulfilled" && !result.value.value.isOk()) {
-            console.error(`Transaction #${index} completed but not OK, retrying...`);
-            
-            buildTxs = await this.buildDynamicTransactions(instructions, fee);
-            if (buildTxs.type !== "Success") return buildTxs;
-
-            toProcess.push(buildTxs.data[index]);
-          } else if (result.status === "fulfilled" && result.value.value.isOk()){
-            console.log(`Transaction #${index} completed!`);
-            txSignatures.push(result.value.value.value);
-          }
-        });
-    
-        attempts++;
-        if (toProcess.length > 0) {
-          console.log(" ");
-          console.log("Waiting 10 seconds before next attempt...");
-          await this.delay(10000);
-        }
-      }
-    
-      if (txSignatures.length === buildTxs.data.length) {
-        return { type: "Success" as const, data: txSignatures };
-      } else {
-        return { type: "SendTransactionsFailure" as const };
-      }
-    } */
-    
     async buildAndSendDynamicTransactions(instructions: InstructionReturn[], fee: boolean) {
-      const COMMITMENT: Finality = "confirmed";
-      const MAX_ATTEMPTS = 10;
-      const RETRY_DELAY_MS = 10000;
+      const commitment: Finality = "finalized";
+      const maxAttemps = 10;
+      const retryDelayMs = 10000;
       let attempts = 0;
       const txSignatures: string[] = [];
 
@@ -1278,9 +1212,9 @@ export class SageGame {
       
       let toProcess = buildTxs.data;
     
-      while (toProcess.length > 0 && attempts < MAX_ATTEMPTS) {
+      while (toProcess.length > 0 && attempts < maxAttemps) {
           // Process transactions
-          const results = await this.sendAllTransactions(toProcess, COMMITMENT);
+          const results = await this.sendAllTransactions(toProcess, commitment);
 
           toProcess = [];
 
@@ -1290,7 +1224,7 @@ export class SageGame {
 
               // If transaction failed to send
               if (result.status === "rejected") {
-                  // console.error(result)
+                  console.error(result)
                   const reason = this.parseError(result.reason);
                   console.error(`> Transaction #${i} failed on attempt ${attempts + 1}: ${reason}`);
                   const newBuild = await this.buildDynamicTransactions(instructions);
@@ -1312,16 +1246,22 @@ export class SageGame {
               } 
               // If transaction sent, confirmed and OK
               else if (result.status === "fulfilled" && result.value.value.isOk()) {
-                  console.log(`> Transaction #${i} completed!`);
-                  txSignatures.push(result.value.value.value);
+                  try {
+                    const parsedTx = await this.connection.getParsedTransaction(result.value.value.value, { commitment, maxSupportedTransactionVersion: 0 });
+                    console.log(`> Transaction #${i} completed! ${parsedTx && parsedTx.meta ? `Fee: ${parsedTx.meta?.fee / LAMPORTS_PER_SOL}` : ""} SOL`);
+                    txSignatures.push(result.value.value.value);
+                  } catch (e) {
+                    console.log(`> Transaction #${i} completed!`);
+                    txSignatures.push(result.value.value.value);
+                  }
               }
     
           }
 
           attempts++;
-          if (toProcess.length > 0 && attempts < MAX_ATTEMPTS) {
-              console.log(`\nWaiting ${RETRY_DELAY_MS / 1000} seconds for next attempt...`);
-              await this.delay(RETRY_DELAY_MS);
+          if (toProcess.length > 0 && attempts < maxAttemps) {
+              console.log(`\nWaiting ${retryDelayMs / 1000} seconds for next attempt...`);
+              await this.delay(retryDelayMs);
           }
       }
     
