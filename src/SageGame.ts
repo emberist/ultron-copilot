@@ -1174,7 +1174,7 @@ export class SageGame {
       };
       
       const getLimit = async (transaction: VersionedTransaction, connection: Connection): Promise<number> => {
-        let unitLimit = (await getSimulationUnits(transaction, connection) || 150000) + 1500;
+        let unitLimit = (await getSimulationUnits(transaction, connection) || 150000) + 2500;
         // console.log("\nUnit Limit:", unitLimit, "CU");
         return unitLimit;
       };

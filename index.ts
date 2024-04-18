@@ -149,7 +149,8 @@ const test = async () => {
  /*  const data = await sage.getResourcesByPlanet(sage.getPlanets().find(item => item.data.planetType === PlanetType.AsteroidBelt)!)
   if (data.type !== "Success") throw new Error(data.type);
   console.log(sage.getResourceName(data.data[0])); */
-
+  
+  return;
 }
 
 test().catch((err) => {

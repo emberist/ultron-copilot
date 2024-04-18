@@ -1,3 +1,4 @@
+import { MovementType } from "../common/constants";
 import { SectorCoordinates } from "../common/types";
 import { cargoV2 } from "../scripts/cargoV2";
 import { scanV2 } from "../scripts/scanV2";
@@ -56,13 +57,13 @@ export const startScan = async (player: SagePlayer) => {
   for (let i = 0; i < cycles; i++) {
     const scan = await scanV2(
       fleet.data,
-      fuelNeeded,
+      movementGo && movementBack && movementGo.movement === MovementType.Subwarp && movementBack.movement === MovementType.Subwarp ? 0 : fuelNeeded, // Temporary for subwarp bug
       movementGo?.movement,
       goRoute,
-      goFuelNeeded,
+      movementGo && movementBack && movementGo.movement === MovementType.Subwarp && movementBack.movement === MovementType.Subwarp ? 0 : goFuelNeeded, // Temporary for subwarp bug
       movementBack?.movement,
       backRoute,
-      backFuelNeeded,
+      movementGo && movementBack && movementGo.movement === MovementType.Subwarp && movementBack.movement === MovementType.Subwarp ? 0 : backFuelNeeded, // Temporary for subwarp bug
     )
     if (scan.type !== "Success") {
       return scan;

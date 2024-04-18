@@ -36,7 +36,7 @@ export const startMining = async (
 
   // other
   console.log(`Mining started! Waiting for ${time} seconds...`);
-  await wait(60);
+  await wait(time);
 
   // action ends
   return { type: "Success" as const }

@@ -1,3 +1,4 @@
+import { MovementType } from "../common/constants";
 import { SectorCoordinates } from "../common/types";
 import { cargoV2 } from "../scripts/cargoV2";
 import { ResourceName } from "../src/SageGame";
@@ -61,15 +62,15 @@ export const startCargo = async (player: SagePlayer) => {
   for (let i = 0; i < cycles; i++) {
     const cargo = await cargoV2(
       fleet.data,
-      fuelNeeded,
+      movementGo.movement === MovementType.Subwarp && movementBack.movement === MovementType.Subwarp ? 0 : fuelNeeded, // Temporary for subwarp bug
       resourcesGo,
       movementGo.movement,
       goRoute,
-      goFuelNeeded,
+      movementGo.movement === MovementType.Subwarp && movementBack.movement === MovementType.Subwarp ? 0 : goFuelNeeded, // Temporary for subwarp bug
       resourcesBack,
       movementBack.movement,
       backRoute,
-      backFuelNeeded,
+      movementGo.movement === MovementType.Subwarp && movementBack.movement === MovementType.Subwarp ? 0 : backFuelNeeded, // Temporary for subwarp bug
     )
     if (cargo.type !== "Success") {
       return cargo;

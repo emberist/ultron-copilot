@@ -47,8 +47,12 @@ export const cargoV2 = async (
 
     // console.log(fuelTank.loadedAmount.toNumber(), fuelNeeded)
     // 1. load fuel
-    if (fuelTank.loadedAmount.lt(new BN(fuelNeeded))) {
+    if (fuelTank.loadedAmount.lt(new BN(fuelNeeded)) && fuelNeeded > 0) { // Temporary for Subwarp Bug
       await actionWrapper(loadCargo, fleet, ResourceName.Fuel, CargoPodType.FuelTank, new BN(MAX_AMOUNT));
+    }
+
+    if (fuelNeeded === 0) { // Temporary for Subwarp Bug
+      await actionWrapper(unloadCargo, fleet, ResourceName.Fuel, CargoPodType.FuelTank, fuelTank.loadedAmount);
     }
 
     // 2. load cargo go

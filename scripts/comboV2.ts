@@ -85,7 +85,20 @@ export const comboV2 = async (
   }
   
   // 5. undock from starbase
-  await actionWrapper(undockFromStarbase, fleet);
+  const undock = await actionWrapper(undockFromStarbase, fleet);
+  if (undock.type !== "Success") {
+    switch (undock.type) {
+      case "FleetIsIdle":
+        break;
+      case "FleetIsMining":
+        await actionWrapper(stopMining, fleet, resourceToMine);
+        break;
+      case "FleetIsMoving":
+        break;
+      default:
+        return undock;
+    }
+  }
 
   // 6. move to sector (->)
   if (movementGo === MovementType.Warp) {
@@ -93,8 +106,18 @@ export const comboV2 = async (
       const sectorTo = goRoute[i];
       const warp = await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, i < goRoute.length - 1);
       if (warp.type !== "Success") {
-        await actionWrapper(dockToStarbase, fleet);
-        return warp;
+        switch (warp.type) {
+          case "FleetIsDocked":
+            await actionWrapper(undockFromStarbase, fleet);
+            await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, i < goRoute.length - 1);
+            break;
+          case "FleetIsMining":
+            await actionWrapper(stopMining, fleet, resourceToMine);
+            await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, i < goRoute.length - 1);
+            break;
+          default:
+            return warp;
+        }
       }
     }   
   }
@@ -103,13 +126,35 @@ export const comboV2 = async (
     const sectorTo = goRoute[1];
     const subwarp = await actionWrapper(subwarpToSector, fleet, sectorTo, goFuelNeeded);
     if (subwarp.type !== "Success") {
-      await actionWrapper(dockToStarbase, fleet);
-      return subwarp;
+      switch (subwarp.type) {
+        case "FleetIsDocked":
+          await actionWrapper(undockFromStarbase, fleet);
+          await actionWrapper(subwarpToSector, fleet, sectorTo, goFuelNeeded);
+          break;
+        case "FleetIsMining":
+          await actionWrapper(stopMining, fleet, resourceToMine);
+          await actionWrapper(subwarpToSector, fleet, sectorTo, goFuelNeeded);
+          break;
+        default:
+          return subwarp;
+      }
     }
   }
 
   // 7. dock to starbase
-  await actionWrapper(dockToStarbase, fleet);
+  const dock = await actionWrapper(dockToStarbase, fleet);
+  if (dock.type !== "Success") {
+    switch (dock.type) {
+      case "FleetIsMining":
+        await actionWrapper(stopMining, fleet, resourceToMine);
+        await actionWrapper(dockToStarbase, fleet);
+        break;
+      case "FleetIsDocked":
+        break;
+      default:
+        return dock;
+    }
+  }
 
   // 8. unload cargo go
   for (const item of effectiveResourcesGo) {
@@ -117,13 +162,46 @@ export const comboV2 = async (
   }
 
   // 9. undock from starbase
-  await actionWrapper(undockFromStarbase, fleet);
+  const undock2 = await actionWrapper(undockFromStarbase, fleet);
+  if (undock2.type !== "Success") {
+    switch (undock2.type) {
+      case "FleetIsIdle":
+        break;
+      case "FleetIsMining":
+        await actionWrapper(stopMining, fleet, resourceToMine);
+        break;
+      case "FleetIsMoving":
+        break;
+      default:
+        return undock;
+    }
+  }
 
   // 10. start mining
-  await actionWrapper(startMining, fleet, resourceToMine, mineTime);
+  const mining = await actionWrapper(startMining, fleet, resourceToMine, mineTime);
+  if (mining.type !== "Success") {
+    switch (mining.type) {
+      case "FleetIsDocked":
+        await actionWrapper(undockFromStarbase, fleet);
+        await actionWrapper(startMining, fleet, resourceToMine, mineTime);
+        break;
+      case "FleetIsMining":
+        break;
+      default:
+        return mining;
+    }
+  }
 
   // 11. stop mining
-  await actionWrapper(stopMining, fleet, resourceToMine);
+  const stop = await actionWrapper(stopMining, fleet, resourceToMine);
+  if (stop.type !== "Success") {
+    switch (stop.type) {
+      case "FleetIsNotMiningAsteroid":
+        break;
+      default:
+        return stop;
+    }
+  }
 
   // 12. move to sector (<-)
   if (movementBack === MovementType.Warp) {
@@ -131,8 +209,18 @@ export const comboV2 = async (
       const sectorTo = backRoute[i];
       const warp = await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, true);
       if (warp.type !== "Success") {
-        await actionWrapper(dockToStarbase, fleet);
-        return warp;
+        switch (warp.type) {
+          case "FleetIsDocked":
+            await actionWrapper(undockFromStarbase, fleet);
+            await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, true);
+            break;
+          case "FleetIsMining":
+            await actionWrapper(stopMining, fleet, resourceToMine);
+            await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, true);
+            break;
+          default:
+            return warp;
+        }
       }
     }   
   }
@@ -141,13 +229,35 @@ export const comboV2 = async (
     const sectorTo = backRoute[1];
     const subwarp = await actionWrapper(subwarpToSector, fleet, sectorTo, backFuelNeeded);
     if (subwarp.type !== "Success") {
-      await actionWrapper(dockToStarbase, fleet);
-      return subwarp;
+      switch (subwarp.type) {
+        case "FleetIsDocked":
+          await actionWrapper(undockFromStarbase, fleet);
+          await actionWrapper(subwarpToSector, fleet, sectorTo, backFuelNeeded);
+          break;
+        case "FleetIsMining":
+          await actionWrapper(stopMining, fleet, resourceToMine);
+          await actionWrapper(subwarpToSector, fleet, sectorTo, backFuelNeeded);
+          break;
+        default:
+          return subwarp;
+      }
     }
   }
 
   // 13. dock to starbase
-  await actionWrapper(dockToStarbase, fleet);
+  const dock2 = await actionWrapper(dockToStarbase, fleet);
+  if (dock2.type !== "Success") {
+    switch (dock2.type) {
+      case "FleetIsMining":
+        await actionWrapper(stopMining, fleet, resourceToMine);
+        await actionWrapper(dockToStarbase, fleet);
+        break;
+      case "FleetIsDocked":
+        break;
+      default:
+        return dock;
+    }
+  }
 
   // 14. unload cargo back
   await actionWrapper(unloadCargo, fleet, resourceToMine, CargoPodType.CargoHold, new BN(MAX_AMOUNT));

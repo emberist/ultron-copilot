@@ -44,8 +44,12 @@ export const scanV2 = async (
   }
 
   // 1. load fuel
-  if (fuelTank.loadedAmount.lt(new BN(fuelNeeded))) {
+  if (fuelTank.loadedAmount.lt(new BN(fuelNeeded)) && fuelNeeded > 0) { // Temporary for Subwarp Bug
     await actionWrapper(loadCargo, fleet, ResourceName.Fuel, CargoPodType.FuelTank, new BN(MAX_AMOUNT));
+  }
+
+  if (fuelNeeded === 0) { // Temporary for Subwarp Bug
+    await actionWrapper(unloadCargo, fleet, ResourceName.Fuel, CargoPodType.FuelTank, fuelTank.loadedAmount);
   }
 
   // 2. load food
@@ -67,7 +71,8 @@ export const scanV2 = async (
     }   
   }
 
-  if (movementGo && movementGo === MovementType.Subwarp && goRoute && goFuelNeeded) {
+  if (movementGo && movementGo === MovementType.Subwarp && goRoute && goFuelNeeded !== undefined && goFuelNeeded >= 0) { // Temporary condition for subwarp bug
+    console.log("OK")
     const sectorTo = goRoute[1];
     const subwarp = await actionWrapper(subwarpToSector, fleet, sectorTo, goFuelNeeded);
     if (subwarp.type !== "Success") {
@@ -92,7 +97,7 @@ export const scanV2 = async (
     }   
   }
 
-  if (movementBack && movementBack === MovementType.Warp && backRoute && backFuelNeeded) {
+  if (movementBack && movementBack === MovementType.Subwarp && backRoute && backFuelNeeded !== undefined && backFuelNeeded >= 0) { // Temporary condition for subwarp bug
     const sectorTo = backRoute[1];
     const subwarp = await actionWrapper(subwarpToSector, fleet, sectorTo, backFuelNeeded);
     if (subwarp.type !== "Success") {
@@ -105,6 +110,7 @@ export const scanV2 = async (
 
   // 12. unload cargo
   await actionWrapper(unloadCargo, fleet, ResourceName.Sdu, CargoPodType.CargoHold, new BN(MAX_AMOUNT));
+  
   if (!fleet.getOnlyDataRunner()) {
     await actionWrapper(unloadCargo, fleet, ResourceName.Food, CargoPodType.CargoHold, new BN(MAX_AMOUNT));
   }

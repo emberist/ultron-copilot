@@ -1132,11 +1132,13 @@ export class SageFleet {
       
       const fuelTank = this.getFuelTank();
       
-      const [fuelInTankData] = fuelTank.resources.filter((item) => item.mint.equals(fuelMint));
-      if (!fuelInTankData) return { type: "FleetFuelTankIsEmpty" as const };
+      if (fuelNeeded.gt(new BN(0))) { // Temporary for Subwarp bug
+        const [fuelInTankData] = fuelTank.resources.filter((item) => item.mint.equals(fuelMint));
+        if (!fuelInTankData) return { type: "FleetFuelTankIsEmpty" as const };
 
-      if (fuelInTankData.amount.lt(fuelNeeded)) 
-        return { type: "NoEnoughFuelToSubwarp" as const };
+        if (fuelInTankData.amount.lt(fuelNeeded)) 
+          return { type: "NoEnoughFuelToSubwarp" as const };
+      }
 
       const input = { keyIndex: 0, toSector: sector.coordinates as [BN, BN] } as StartSubwarpInput;
 
@@ -1165,12 +1167,20 @@ export class SageFleet {
       const update = await this.update();
       if (update.type !== "Success") return { type: "FleetFailedToUpdate" as const };
 
+      const ixs: InstructionReturn[] = [];
+
       const fuelMint = this.getSageGame().getResourceMintByName(ResourceName.Fuel);
       
       const fuelTank = this.getFuelTank();
       
-      const [fuelInTankData] = fuelTank.resources.filter((item) => item.mint.equals(fuelMint));
-      if (!fuelInTankData || fuelInTankData.amount.eq(new BN(0))) return { type: "FleetFuelTankIsEmpty" as const };
+      // const [fuelInTankData] = fuelTank.resources.filter((item) => item.mint.equals(fuelMint));
+      // if (!fuelInTankData || fuelInTankData.amount.eq(new BN(0))) return { type: "FleetFuelTankIsEmpty" as const }; // Temporary disabled for Subwarp Bug
+      const ixFleetFuelTankMintAta = this.getSageGame().ixCreateAssociatedTokenAccountIdempotent(fuelTank.key, fuelMint)
+      try {
+        await getAccount(this.getSageGame().getProvider().connection, ixFleetFuelTankMintAta.address);
+      } catch (e) {
+        ixs.push(ixFleetFuelTankMintAta.instruction);
+      }
 
       const ix_movement = this.fleet.state.MoveWarp ? 
         [Fleet.moveWarpHandler(
@@ -1195,7 +1205,8 @@ export class SageFleet {
           fuelTank.key,
           this.getSageGame().getCargoTypeKeyByMint(fuelMint),
           this.getSageGame().getCargoStatsDefinition().key,
-          fuelInTankData.tokenAccountKey,
+          // fuelInTankData.tokenAccountKey,
+          ixFleetFuelTankMintAta.address,
           fuelMint,
           this.player.getPilotXpKey(),
           this.getSageGame().getGamePoints().pilotXpCategory.category,
@@ -1206,7 +1217,9 @@ export class SageFleet {
           this.getSageGame().getGame().key,
         )] : [];
 
-        return { type: "Success" as const, ixs: ix_movement };
+        ixs.push(...ix_movement)
+
+        return { type: "Success" as const, ixs };
     }
     /** END TRAVEL */
 
