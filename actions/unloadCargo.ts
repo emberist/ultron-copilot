@@ -21,7 +21,7 @@ export const unloadCargo = async (
   switch (ix.type) {
     // issues that lead to the next action of the main script or the end of the script
     case "NoResourcesToWithdraw":
-      console.log("No resources to withdraw");
+      console.log(`No ${resourceName} to withdraw`);
       return { type: "NoResourcesToWithdraw" as const };
 
     // blocking errors or failures that require retrying the entire action

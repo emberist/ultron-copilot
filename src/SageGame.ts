@@ -8,7 +8,7 @@ import { CargoIDLProgram, CARGO_IDL, CargoStatsDefinition, CargoType } from "@st
 import { CraftingIDLProgram, CRAFTING_IDL } from "@staratlas/crafting";
 import { PlayerProfile } from "@staratlas/player-profile";
 import { SectorCoordinates } from "../common/types";
-import { AsyncSigner, byteArrayToString, getParsedTokenAccountsByOwner, createAssociatedTokenAccountIdempotent, keypairToAsyncSigner, sendTransaction, buildOptimalDynamicTransactions, TransactionReturn, getSimulationUnits } from "@staratlas/data-source";
+import { AsyncSigner, byteArrayToString, getParsedTokenAccountsByOwner, createAssociatedTokenAccountIdempotent, keypairToAsyncSigner, sendTransaction, buildOptimalDynamicTransactions, TransactionReturn, getSimulationUnits, getCurrentTimestampOnChain } from "@staratlas/data-source";
 import { createBurnInstruction, getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { CustomPriorityFee, PriorityLevel, PriorityLevelValue, quattrinoTokenPubkey, starbasesInfo } from "../common/constants";
 import { PointsIDLProgram, POINTS_IDL, PointsCategory } from "@staratlas/points"
@@ -1104,6 +1104,14 @@ export class SageGame {
     delay(ms: number) {
       return new Promise(resolve => setTimeout(resolve, ms));
     }
+
+    async getCurrentTimestampOnChain() {
+      try {
+        return await getCurrentTimestampOnChain(this.connection);
+      } catch (e) {
+        return BigInt(Math.floor(Date.now() / 1000));
+      }
+    }
     /** END HELPERS */
 
 
@@ -1192,9 +1200,8 @@ export class SageGame {
       return { type: "Success" as const, data: txs.value };
     }
 
-    async buildAndSendDynamicTransactions(instructions: InstructionReturn[], fee: boolean) {
+    async buildAndSendDynamicTransactions(instructions: InstructionReturn[], fee: boolean, maxAttemps: number = 10) {
       const commitment: Finality = "finalized";
-      const maxAttemps = 10;
       const initDelayMs = 10000;
       let delayMs = initDelayMs;
       let attempts = 0;
@@ -1225,7 +1232,7 @@ export class SageGame {
 
               // If transaction failed to send
               if (result.status === "rejected") {
-                  console.error(result)
+                  // console.error(result)
                   const reason = this.parseError(result.reason);
                   console.error(`> Transaction #${i} failed on attempt ${attempts + 1}: ${reason}`);
                   const newBuild = await this.buildDynamicTransactions(instructions);

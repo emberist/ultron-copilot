@@ -24,6 +24,10 @@ export const loadCargo = async (
       console.log("Your fleet cargo is full");
       return { type: "FleetCargoPodIsFull" as const };
 
+    case "StarbaseCargoIsEmpty":
+      console.log(`No ${resourceName} in starbase`);
+      return { type: "StarbaseCargoIsEmpty" as const };
+
     // blocking errors or failures that require retrying the entire action
     default:
       if (ix.type !== "Success") throw new Error(ix.type); // retry entire action

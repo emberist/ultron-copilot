@@ -19,7 +19,7 @@ export const startMining = async (player: SagePlayer) => {
   if (!fleetCurrentSector) return { type: "FleetCurrentSectorError" as const };
 
   // 3. set mining sector
-  const starbase = await setStarbaseV2(fleet.data);
+  const starbase = await setStarbaseV2(fleet.data, false, "Choose the starbase destination:");
   if (starbase.type !== "Success") return starbase;
 
   const sector = player.getSageGame().getSectorByCoords(starbase.data.data.sector as SectorCoordinates);

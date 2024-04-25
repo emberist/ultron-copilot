@@ -8,6 +8,7 @@ import { starbasesInfo } from "../../common/constants";
 export const setStarbaseV2 = async (
   fleet: SageFleet,
   excludeFleetCurrentStarbase: boolean = false,
+  text: string
 ) => {
   const indexMap = new Map(starbasesInfo.map((item, index) => [item.name, index]));
   const starbases = fleet.getSageGame().getStarbases().map((starbase) => {
@@ -30,7 +31,7 @@ export const setStarbaseV2 = async (
     {
       type: "list",
       name: "starbase",
-      message: "Choose the starbase destination:",
+      message: text,
       choices: !excludeFleetCurrentStarbase
         ? starbases.map((starbase) => ({
             name: fleet.getSageGame().bnArraysEqual(starbase.data.data.sector, fleetCurrentSector.coordinates) ? 
