@@ -21,7 +21,7 @@ export const startCargo = async (player: SagePlayer) => {
   if (!fleetCurrentSector) return { type: "FleetCurrentSectorError" as const };
 
   // 3. set cargo sector
-  const starbase = await setStarbaseV2(fleet.data, true);
+  const starbase = await setStarbaseV2(fleet.data, true, "Choose the starbase destination:");
   if (starbase.type !== "Success") return starbase;
 
   const sector = player.getSageGame().getSectorByCoords(starbase.data.data.sector as SectorCoordinates);
@@ -62,15 +62,15 @@ export const startCargo = async (player: SagePlayer) => {
   for (let i = 0; i < cycles; i++) {
     const cargo = await cargoV2(
       fleet.data,
-      movementGo.movement === MovementType.Subwarp && movementBack.movement === MovementType.Subwarp ? 0 : fuelNeeded, // Temporary for subwarp bug
+      fuelNeeded,
       resourcesGo,
       movementGo.movement,
       goRoute,
-      movementGo.movement === MovementType.Subwarp && movementBack.movement === MovementType.Subwarp ? 0 : goFuelNeeded, // Temporary for subwarp bug
+      goFuelNeeded,
       resourcesBack,
       movementBack.movement,
       backRoute,
-      movementGo.movement === MovementType.Subwarp && movementBack.movement === MovementType.Subwarp ? 0 : backFuelNeeded, // Temporary for subwarp bug
+      backFuelNeeded,
     )
     if (cargo.type !== "Success") {
       return cargo;

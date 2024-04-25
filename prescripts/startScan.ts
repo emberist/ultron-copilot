@@ -2,11 +2,13 @@ import { MovementType } from "../common/constants";
 import { SectorCoordinates } from "../common/types";
 import { cargoV2 } from "../scripts/cargoV2";
 import { scanV2 } from "../scripts/scanV2";
+import { SectorRoute } from "../src/SageFleet";
 import { SagePlayer } from "../src/SagePlayer";
 import { setCycles } from "../utils/inputs/setCycles";
 import { setFleetV2 } from "../utils/inputsV2/setFleet";
 import { setMovementTypeV2 } from "../utils/inputsV2/setMovementType";
 import { setScanCoordinates } from "../utils/inputsV2/setScanCoordinates";
+import { setStarbaseV2 } from "../utils/inputsV2/setStarbase";
 
 export const startScan = async (player: SagePlayer) => {
   // 1. set cycles
@@ -19,51 +21,43 @@ export const startScan = async (player: SagePlayer) => {
   const fleetCurrentSector = fleet.data.getCurrentSector();
   if (!fleetCurrentSector) return { type: "FleetCurrentSectorError" as const };
 
-  // 3. set sector coords
-  const coords = await setScanCoordinates();
-  if (coords.type !== "Success") return coords;
+  // 3. set scan sector
+  const scanSectorCoords = fleetCurrentSector.hasStarbase ? await setScanCoordinates(fleetCurrentSector) : { type: "Success" as const, data: fleetCurrentSector.coordinates };
 
-  const sector = await player.getSageGame().getSectorByCoordsAsync(coords.data);
-  if (sector.type !== "Success") return sector;
-
-  const isSameSector = fleetCurrentSector.key.equals(sector.data.key);
-
-  let movementGo, movementBack;
-  if (!isSameSector) {
-    // 4. set fleet movement type (->)
-    movementGo = await setMovementTypeV2("(->)") 
-    
-    // 5. set fleet movement type (<-) 
-    movementBack = await setMovementTypeV2("(<-)")
+  const scanSector: SectorRoute = {
+    coordinates: scanSectorCoords.data,
+    key: player.getSageGame().getSectorKeyByCoords(scanSectorCoords.data),
+    hasStarbase: player.getSageGame().getStarbaseByCoords(scanSectorCoords.data).type === "Success"
   }
 
-  // 4 & 5. calculate routes and fuel needed
-  const [goRoute, goFuelNeeded] = fleet.data.calculateRouteToSector(
-    fleetCurrentSector.coordinates as SectorCoordinates, 
-    sector.data.data.coordinates as SectorCoordinates,
-    movementGo?.movement,
-  );
-  
-  const [backRoute, backFuelNeeded] = fleet.data.calculateRouteToSector(
-    sector.data.data.coordinates as SectorCoordinates, 
-    fleetCurrentSector.coordinates as SectorCoordinates,
-    movementBack?.movement,
-  );
-  
-  const fuelNeeded = (goFuelNeeded + Math.round(goFuelNeeded * 0.3)) + (backFuelNeeded + Math.round(backFuelNeeded * 0.3));
-  // console.log("Fuel needed:", fuelNeeded);
+  const isSameSector = fleetCurrentSector.key.equals(scanSector.key);
 
-  // 7. start cargo loop
+  // 4a. set starbase to come back and movements 
+  let backStarbaseSector: SectorRoute;
+  let movementGoBack: MovementType;
+
+  backStarbaseSector = fleetCurrentSector
+  movementGoBack = (await setMovementTypeV2("(all)")).movement
+
+  // the fleet is not in a starbase sector
+  if (isSameSector && !fleetCurrentSector.hasStarbase) {    
+    const starbase = await setStarbaseV2(fleet.data, true, "Choose the starbase to come back:");
+    if (starbase.type !== "Success") return starbase;
+
+    backStarbaseSector = {
+      coordinates: starbase.data.data.sector as SectorCoordinates,
+      key: player.getSageGame().getSectorKeyByCoords(starbase.data.data.sector as SectorCoordinates),
+      hasStarbase: true
+    }
+  }
+
+  // 5. start scan loop
   for (let i = 0; i < cycles; i++) {
     const scan = await scanV2(
       fleet.data,
-      movementGo && movementBack && movementGo.movement === MovementType.Subwarp && movementBack.movement === MovementType.Subwarp ? 0 : fuelNeeded, // Temporary for subwarp bug
-      movementGo?.movement,
-      goRoute,
-      movementGo && movementBack && movementGo.movement === MovementType.Subwarp && movementBack.movement === MovementType.Subwarp ? 0 : goFuelNeeded, // Temporary for subwarp bug
-      movementBack?.movement,
-      backRoute,
-      movementGo && movementBack && movementGo.movement === MovementType.Subwarp && movementBack.movement === MovementType.Subwarp ? 0 : backFuelNeeded, // Temporary for subwarp bug
+      scanSector,
+      backStarbaseSector,
+      movementGoBack
     )
     if (scan.type !== "Success") {
       return scan;
