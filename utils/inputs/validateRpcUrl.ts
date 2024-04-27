@@ -4,7 +4,15 @@ export const validateRpcUrl = (rpcUrl: string) => {
   try {
     const url = new URL(rpcUrl);
 
-    if (verifiedRpc.includes(url.hostname) && url.protocol === "https:") {
+    let rpcFoundInList:boolean = false
+    for (var i of verifiedRpc)
+    {
+      if((url.hostname).indexOf(verifiedRpc[i]) > -1) {
+        rpcFoundInList = true
+      }
+    }
+
+    if (rpcFoundInList && url.protocol === "https:") {
       return { type: "Success" as const, result: rpcUrl };
     }
 
