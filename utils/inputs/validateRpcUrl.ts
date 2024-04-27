@@ -5,9 +5,9 @@ export const validateRpcUrl = (rpcUrl: string) => {
     const url = new URL(rpcUrl);
 
     let rpcFoundInList:boolean = false
-    for (var i of verifiedRpc)
+    for (var rpc of verifiedRpc)
     {
-      if((url.hostname).indexOf(verifiedRpc[i]) > -1) {
+      if((url.hostname).indexOf(rpc) > -1) {
         rpcFoundInList = true
       }
     }
