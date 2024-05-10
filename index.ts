@@ -18,6 +18,7 @@ import { startMining } from "./prescripts/startMining";
 import { startCargo } from "./prescripts/startCargo";
 import { startScan } from "./prescripts/startScan";
 import { startCombo } from "./prescripts/startCombo";
+import { startCraft } from "./prescripts/startCraft";
 
 const test = async () => {
   console.log(`Welcome to Ultron Copilot ${version}!`);
@@ -73,8 +74,8 @@ const test = async () => {
     return;
   }
 
-  const playerProfile = playerProfiles.data.length == 1 ? 
-    playerProfiles.data[0] : 
+  const playerProfile = playerProfiles.data.length == 1 ?
+    playerProfiles.data[0] :
     (await setPlayerProfile(playerProfiles.data)).data;
 
   const player = await SagePlayer.init(sage, playerProfile);
@@ -132,13 +133,18 @@ const test = async () => {
       }
       break;
 
+    case "Craft":
+      // 9. Play with crafting (SageCrafting.ts)
+      const craft = await startCraft(player);
+      if (craft.type !== "Success") {
+        console.log("\Craft failed.", craft.type)
+        return;
+      }
+      break;
+
     default:
       return;
   }
-
-  // 9. Play with crafting (SageCrafting.ts)
-  // ...
-
 
   // 10. Play with galactic marketplace (GalacticMarketplace.ts)
   // ...
@@ -146,10 +152,10 @@ const test = async () => {
   /* const data = await sage.getPlanets()
   console.log(data) */
 
- /*  const data = await sage.getResourcesByPlanet(sage.getPlanets().find(item => item.data.planetType === PlanetType.AsteroidBelt)!)
-  if (data.type !== "Success") throw new Error(data.type);
-  console.log(sage.getResourceName(data.data[0])); */
-  
+  /*  const data = await sage.getResourcesByPlanet(sage.getPlanets().find(item => item.data.planetType === PlanetType.AsteroidBelt)!)
+   if (data.type !== "Success") throw new Error(data.type);
+   console.log(sage.getResourceName(data.data[0])); */
+
   return;
 }
 

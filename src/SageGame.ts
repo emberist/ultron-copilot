@@ -72,6 +72,8 @@ export class SageGame {
     static readonly CRAFTING_PROGRAM_ID = new PublicKey("CRAFT2RPXPJWCEix4WpJST3E7NLf79GTqZUL75wngXo5");
     static readonly POINTS_PROGRAM_ID = new PublicKey("Point2iBvz7j5TMVef8nEgpmz4pDr7tU7v3RjAfkQbM")
 
+    static readonly ATLAS_KEY = new PublicKey("ATLASXmbPQxBUYbxPsV97usA3fPQYEqzQBUHgiFCUsXx");
+
     private sageProgram: SageIDLProgram;
     private playerProfileProgram: PlayerProfileIDLProgram;
     private profileFactionProgram: ProfileFactionIDLProgram;
@@ -123,6 +125,7 @@ export class SageGame {
     // CHECK: is ! safe here?
     private game!: Game;
     private gameState!: GameState;
+    private craftingDomain!: PublicKey;
     private points!: Points;
     private sectors!: Sector[];
     private stars!: Star[];
@@ -209,6 +212,7 @@ export class SageGame {
 
       game.game = gameAndGameState.data.game;
       game.gameState = gameAndGameState.data.gameState;
+      game.craftingDomain = gameAndGameState.data.game.data.crafting.domain;
       game.points = gameAndGameState.data.game.data.points;
       game.pointsCategories = pointsCategories.data;
       game.cargoStatsDefinition = cargoStatsDefinition.data;
@@ -276,6 +280,10 @@ export class SageGame {
       return { type: "ResourceNotFound" as const };
     }
 
+    getAtlasFeeAccount() {
+      return this.getAssociatedTokenAddressSync(this.getAsyncSigner().publicKey(), SageGame.ATLAS_KEY);
+    }
+
     /** GAME AND GAME STATE */
     // Game And Game State Accounts - fetch only one per game
     private async getGameAndGameStateAccounts() {
@@ -313,6 +321,10 @@ export class SageGame {
 
     getGameState() {
       return this.gameState;
+    }
+
+    getCraftingDomain() {
+      return this.craftingDomain;
     }
 
     getGamePoints() {
