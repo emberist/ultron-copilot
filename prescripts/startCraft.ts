@@ -24,10 +24,14 @@ export const startCraft = async (player: SagePlayer) => {
   if (recipe.type !== "Success") return recipe;
 
   // 5. set quantity
-  const quantity = await setCraftingQuantity();
+  const maxCraftableQuantity = await crafting.getMaxAvailableQuantity(starbase.data, recipe.data);
+  if (maxCraftableQuantity.type !== "Success") return maxCraftableQuantity;
+  const quantity = await setCraftingQuantity(maxCraftableQuantity.data);
 
   // 6. set num crew
-  const numCrew = await setNumCrew();
+  const availableCrew = await crafting.getAvailableCrew(starbase.data);
+  if (availableCrew.type !== "Success") return availableCrew;
+  const numCrew = await setNumCrew(availableCrew.data);
 
   // 7. confirm
   const confirm = await setCraftingConfirm(recipe.data, quantity, numCrew, crafting);

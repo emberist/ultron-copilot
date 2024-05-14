@@ -2,6 +2,7 @@ import { Recipe } from "@staratlas/crafting";
 import { InstructionReturn } from "@staratlas/data-source";
 import { Starbase } from "@staratlas/sage";
 import { SageCrafting } from "../src/SageCrafting";
+import { wait } from "../utils/actions/wait";
 
 export const claimCrafting = async (
   crafting: SageCrafting,
@@ -13,6 +14,13 @@ export const claimCrafting = async (
   console.log(`\nClaiming crafting outputs...`);
 
   // data
+  while (true) {
+    const craftingProcessCompleted = await crafting.isCraftingProcessCompleted(starbase, recipe, craftingId);
+    if (craftingProcessCompleted.type !== "Success") throw new Error(craftingProcessCompleted.type);
+    if (!!craftingProcessCompleted.data.completed) break;
+    console.log(`Crafting not completed yet! Waiting for ${craftingProcessCompleted.data.timeToEnd} seconds...`);
+    await wait(craftingProcessCompleted.data.timeToEnd);
+  }
 
   // instruction
   let ix = await crafting.ixClaimCrafting(starbase, recipe, craftingId);

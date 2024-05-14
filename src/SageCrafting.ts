@@ -1,12 +1,16 @@
 import { getAccount } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import { BN } from "@staratlas/anchor";
-import { CraftableItem, CraftingFacility, CraftingProcess, Recipe, RecipeInputsOutputs, RecipeStatus } from "@staratlas/crafting";
+import { CraftableItem, CraftingFacility, CraftingProcess, CraftingProcessStatus, Recipe, RecipeInputsOutputs, RecipeStatus } from "@staratlas/crafting";
 import { InstructionReturn, readAllFromRPC, readFromRPCOrError } from "@staratlas/data-source";
-import { CraftingInstance, Starbase, StarbaseClaimCraftingOutputsInput, StarbaseCloseCraftingProcessInput, StarbaseCreateCraftingProcessInput, StarbaseDepositCraftingIngredientInput, StarbaseStartCraftingProcessInput } from "@staratlas/sage";
+import { CraftingInstance, Starbase, StarbaseClaimCraftingOutputsInput, StarbaseCloseCraftingProcessInput, StarbaseCreateCraftingProcessInput, StarbaseDepositCraftingIngredientInput, StarbaseStartCraftingProcessInput, UpkeepResourceType } from "@staratlas/sage";
 import { SageGame } from "./SageGame";
 import { SagePlayer } from "./SagePlayer";
 
+export enum CraftingProcessType {
+  Craft,
+  Upgrade,
+}
 
 export class SageCrafting {
 
@@ -42,12 +46,12 @@ export class SageCrafting {
     return this.recipes;
   }
 
-  async getCraftingFacilityAccount(craftingFacilityPubkey: PublicKey) {
+  async getCraftingFacilityAccount(craftingFacilityKey: PublicKey) {
     try {
       const craftingFacility = await readFromRPCOrError(
         this.getSageGame().getProvider().connection,
         this.getSageGame().getCraftingProgram(),
-        craftingFacilityPubkey,
+        craftingFacilityKey,
         CraftingFacility,
         "confirmed"
       );
@@ -55,6 +59,22 @@ export class SageCrafting {
       return { type: "Success" as const, data: craftingFacility };
     } catch (e) {
       return { type: "CraftingFacilityNotFound" as const };
+    }
+  }
+
+  async getCraftingProcessAccount(craftingProcessKey: PublicKey) {
+    try {
+      const craftingProcess = await readFromRPCOrError(
+        this.getSageGame().getProvider().connection,
+        this.getSageGame().getCraftingProgram(),
+        craftingProcessKey,
+        CraftingProcess,
+        "confirmed"
+      );
+
+      return { type: "Success" as const, data: craftingProcess };
+    } catch (e) {
+      return { type: "CraftingProcessNotFound" as const };
     }
   }
 
@@ -102,6 +122,49 @@ export class SageCrafting {
     return Math.floor(Math.random() * 999999999);
   }
 
+  async isCraftingProcessCompleted(starbase: Starbase, recipe: Recipe, craftingId: number) {
+    const craftingProcessKey = this.getCraftingProcessAddress(
+      starbase.data.craftingFacility,
+      recipe.key,
+      new BN(craftingId)
+    );
+    const craftingProcess = await this.getCraftingProcessAccount(craftingProcessKey);
+    if (craftingProcess.type !== "Success") return craftingProcess;
+
+    const craftingProcessStatusCompleted = craftingProcess.data.data.status === CraftingProcessStatus.Completed;
+    const craftingProcessType = this.getCraftingProcessTypeByRecipe(recipe);
+    let upkeepResource = this.getUpkeepResourceByCraftingProcessType(craftingProcessType);
+
+    await this.getSageGame().update();
+    const updatedStarbase = this.getSageGame().getStarbaseByKey(starbase.key);
+    if (updatedStarbase.type !== "Success") return updatedStarbase;
+    starbase = updatedStarbase.data;
+
+    const starbaseTime = starbase.getStarbaseTime(upkeepResource, new BN(Date.now()).div(new BN(1000)), this.getSageGame().getGameState());
+    const timeToEnd = craftingProcess.data.data.endTime.toNumber() - starbaseTime.toNumber();
+
+    return {
+      type: "Success" as const,
+      data: {
+        completed: craftingProcessStatusCompleted && timeToEnd < 0,
+        timeToEnd: timeToEnd
+      }
+    };
+  }
+
+  private getCraftingProcessTypeByRecipe(recipe: Recipe) {
+    return this.recipes.some(craftRecipe => craftRecipe.key.equals(recipe.key)) ? CraftingProcessType.Craft : CraftingProcessType.Upgrade;
+  }
+
+  private getUpkeepResourceByCraftingProcessType(craftingProcessType: CraftingProcessType) {
+    switch (craftingProcessType) {
+      case CraftingProcessType.Craft:
+        return UpkeepResourceType.Food;
+      case CraftingProcessType.Upgrade:
+        return UpkeepResourceType.Toolkit;
+    }
+  }
+
   private getCraftingProcessAddress(craftingFacilityKey: PublicKey, craftingRecipeKey: PublicKey, craftingId: BN) {
     const [craftingProcess] = CraftingProcess.findAddress(
       this.getSageGame().getCraftingProgram(),
@@ -128,6 +191,29 @@ export class SageCrafting {
       mint,
     );
     return craftableItem;
+  }
+
+  async getMaxAvailableQuantity(starbase: Starbase, recipe: Recipe) {
+    const ingredients = this.getRecipeIngredients(recipe);
+    const [output] = ingredients.outputs;
+    let maxCraftableQuantity = 999999999;
+    for (const input of ingredients.inputs) {
+      const starbasePlayerPod = await this.player.getStarbasePlayerPodAsync(starbase);
+      if (starbasePlayerPod.type !== "Success") return starbasePlayerPod;
+      const starbasePodMintAta = this.getSageGame().getAssociatedTokenAddressSync(starbasePlayerPod.data.key, input.mint);
+      const starbasePodMintBalance = await this.getSageGame().getTokenAccountBalance(starbasePodMintAta);
+      const ingredientLimit = starbasePodMintBalance / input.amount.toNumber();
+      maxCraftableQuantity = Math.min(ingredientLimit, maxCraftableQuantity) * output.amount.toNumber();
+    }
+    return { type: "Success" as const, data: maxCraftableQuantity };
+  }
+
+  async getAvailableCrew(starbase: Starbase) {
+    const starbasePlayer = await this.player.getStarbasePlayerByStarbaseAsync(starbase);
+    if (starbasePlayer.type !== "Success") return starbasePlayer;
+    const availableCrew = starbasePlayer.data.data.totalCrew - starbasePlayer.data.data.busyCrew;
+    if (availableCrew === 0) return { type: "NoAvailableCrewInStarbase" as const };
+    return { type: "Success" as const, data: availableCrew };
   }
 
   /** SAGE INSTRUCTIONS */
@@ -200,7 +286,7 @@ export class SageCrafting {
         ixs.push(ixIngredientAta.instruction);
       }
 
-      const starbasePodMintAta = this.getSageGame().getAssociatedTokenAddressSync(starbasePlayerPod.data.key, ingredient.mint)
+      const starbasePodMintAta = this.getSageGame().getAssociatedTokenAddressSync(starbasePlayerPod.data.key, ingredient.mint);
 
       const depositInput = {
         keyIndex: 0,
