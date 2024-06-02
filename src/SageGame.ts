@@ -72,6 +72,8 @@ export class SageGame {
     static readonly CRAFTING_PROGRAM_ID = new PublicKey("CRAFT2RPXPJWCEix4WpJST3E7NLf79GTqZUL75wngXo5");
     static readonly POINTS_PROGRAM_ID = new PublicKey("Point2iBvz7j5TMVef8nEgpmz4pDr7tU7v3RjAfkQbM")
 
+    static readonly ATLAS_KEY = new PublicKey("ATLASXmbPQxBUYbxPsV97usA3fPQYEqzQBUHgiFCUsXx");
+
     private sageProgram: SageIDLProgram;
     private playerProfileProgram: PlayerProfileIDLProgram;
     private profileFactionProgram: ProfileFactionIDLProgram;
@@ -123,6 +125,7 @@ export class SageGame {
     // CHECK: is ! safe here?
     private game!: Game;
     private gameState!: GameState;
+    private craftingDomain!: PublicKey;
     private points!: Points;
     private sectors!: Sector[];
     private stars!: Star[];
@@ -209,6 +212,7 @@ export class SageGame {
 
       game.game = gameAndGameState.data.game;
       game.gameState = gameAndGameState.data.gameState;
+      game.craftingDomain = gameAndGameState.data.game.data.crafting.domain;
       game.points = gameAndGameState.data.game.data.points;
       game.pointsCategories = pointsCategories.data;
       game.cargoStatsDefinition = cargoStatsDefinition.data;
@@ -276,6 +280,52 @@ export class SageGame {
       return { type: "ResourceNotFound" as const };
     }
 
+    getAtlasFeeAccount() {
+      return this.getAssociatedTokenAddressSync(this.getAsyncSigner().publicKey(), SageGame.ATLAS_KEY);
+    }
+
+    async update() {
+      await this.delay(5000); // wait five seconds before updating the game
+
+      const [gameAndGameState, pointsCategories, cargoStatsDefinition, sectors, stars, planets, mineItems, resources, starbases, surveyDataUnitTracker] = await Promise.all([
+        this.getGameAndGameStateAccounts(),
+        this.getPointsCategoriesAccount(),
+        this.getCargoStatsDefinitionAccount(),
+        this.getAllSectorsAccount(),
+        this.getAllStarsAccount(),
+        this.getAllPlanetsAccount(),
+        this.getAllMineItems(),
+        this.getAllResources(),
+        this.getAllStarbasesAccount(),
+        this.getSurveyDataUnitTrackerAccount()
+      ]);
+
+      if (gameAndGameState.type === "GameAndGameStateNotFound") throw new Error(gameAndGameState.type);
+      if (pointsCategories.type === "PointsCategoriesNotFound") throw new Error(pointsCategories.type);
+      if (cargoStatsDefinition.type === "CargoStatsDefinitionNotFound") throw new Error(cargoStatsDefinition.type);
+      if (sectors.type === "SectorsNotFound") throw new Error(sectors.type);
+      if (stars.type === "StarsNotFound") throw new Error(stars.type);
+      if (planets.type === "PlanetsNotFound") throw new Error(planets.type);
+      if (mineItems.type === "MineItemsNotFound") throw new Error(mineItems.type);
+      if (resources.type === "ResourcesNotFound") throw new Error(resources.type);
+      if (starbases.type === "StarbasesNotFound") throw new Error(starbases.type);
+      if (surveyDataUnitTracker.type === "SurveyDataUnitTrackerNotFound") throw new Error(surveyDataUnitTracker.type);
+
+      this.game = gameAndGameState.data.game;
+      this.gameState = gameAndGameState.data.gameState;
+      this.craftingDomain = gameAndGameState.data.game.data.crafting.domain;
+      this.points = gameAndGameState.data.game.data.points;
+      this.pointsCategories = pointsCategories.data;
+      this.cargoStatsDefinition = cargoStatsDefinition.data;
+      this.sectors = sectors.data;
+      this.stars = stars.data;
+      this.planets = planets.data;
+      this.mineItems = mineItems.data;
+      this.resources = resources.data;
+      this.starbases = starbases.data;
+      this.surveyDataUnitTracker = surveyDataUnitTracker.data;
+    }
+
     /** GAME AND GAME STATE */
     // Game And Game State Accounts - fetch only one per game
     private async getGameAndGameStateAccounts() {
@@ -313,6 +363,10 @@ export class SageGame {
 
     getGameState() {
       return this.gameState;
+    }
+
+    getCraftingDomain() {
+      return this.craftingDomain;
     }
 
     getGamePoints() {
