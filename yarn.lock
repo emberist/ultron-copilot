@@ -247,10 +247,10 @@
     "@staratlas/data-source" "^0.7.4"
     "@staratlas/player-profile" "^0.9.1"
 
-"@staratlas/sage@^1.0.2":
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/@staratlas/sage/-/sage-1.0.2.tgz#8b2e47c8e7cc610db5c985c5b219df7cd2079292"
-  integrity sha512-PWz8eUflXvk14+I+fCupnEAgsuQ2UAkgi32laZ/s3JqINnQOE/Dhpa9DPSgqas/5J5/fti5FS1JacmqpU2DcdQ==
+"@staratlas/sage@^1.1.0-alpha.1":
+  version "1.1.0-alpha.1"
+  resolved "https://registry.yarnpkg.com/@staratlas/sage/-/sage-1.1.0-alpha.1.tgz#de7206c18f30752014d788933ae7dd31bff4ba4d"
+  integrity sha512-6UbZLxMOrQVfz9HlT35QrCygP2nqKbv9R0YojQeMDr3cNKgjcSuywc+09jgvtNdUvtbA+CQyW9g/f5fPf/Xqsg==
   dependencies:
     "@solana/spl-token" "^0.3.7"
     "@solana/web3.js" "^1.74.0"
