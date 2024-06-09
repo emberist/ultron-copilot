@@ -211,8 +211,17 @@ export const miningV2 = async (
     }
   }
 
+
   // 10. unload cargo
-  await actionWrapper(unloadCargo, fleet, resourceToMine, CargoPodType.CargoHold, new BN(MAX_AMOUNT));
+  const unload =await actionWrapper(unloadCargo, fleet, resourceToMine, CargoPodType.CargoHold, new BN(MAX_AMOUNT));
+  if (unload.type !== "Success") {
+    switch (unload.type) {
+      case "FleetNotDockedToStarbase":
+        await actionWrapper(stopMining, fleet, resourceToMine);
+        await actionWrapper(dockToStarbase, fleet);
+        break;
+    }
+  }
 
   // 11. unload food
   // await actionWrapper(unloadCargo, fleet.data, ResourceName.Food, CargoPodType.CargoHold, new BN(MAX_AMOUNT));

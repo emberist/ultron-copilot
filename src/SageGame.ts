@@ -1256,7 +1256,7 @@ export class SageGame {
 
     async buildAndSendDynamicTransactions(instructions: InstructionReturn[], fee: boolean, maxAttemps: number = 10) {
       const commitment: Finality = "finalized";
-      const initDelayMs = 10000;
+      const initDelayMs = 1000;
       let delayMs = initDelayMs;
       let attempts = 0;
       const txSignatures: string[] = [];
@@ -1324,7 +1324,7 @@ export class SageGame {
           if (toProcess.length > 0 && attempts < maxAttemps) {
               console.log(`\nWaiting ${delayMs / 1000} seconds for next attempt...`);
               await this.delay(delayMs);
-              delayMs = delayMs + 5000;
+              delayMs = delayMs + 1000;
           }
       }
     

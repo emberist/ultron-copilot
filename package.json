@@ -33,12 +33,14 @@
     "bs58": "^5.0.0",
     "cli-progress": "^3.12.0",
     "fs-extra": "^11.2.0",
-    "inquirer": "^8.0.0"
+    "inquirer": "^8.0.0",
+    "undici": "^6.18.2"
   },
   "resolutions": {
     "@solana/spl-token": "<=0.4.1",
     "@solana/spl-token-metadata": "<=0.1.2",
-    "@solana/web3.js": "<=1.91.4"
+    "@solana/web3.js": "<=1.91.4",
+    "rpc-websockets": "7.11.0"
   },
   "author": "meta_arion",
   "license": "ISC"
