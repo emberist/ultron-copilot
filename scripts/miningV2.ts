@@ -213,12 +213,13 @@ export const miningV2 = async (
 
 
   // 10. unload cargo
-  const unload =await actionWrapper(unloadCargo, fleet, resourceToMine, CargoPodType.CargoHold, new BN(MAX_AMOUNT));
-  if (unload.type !== "Success") {
+  var unload = await actionWrapper(unloadCargo, fleet, resourceToMine, CargoPodType.CargoHold, new BN(MAX_AMOUNT));
+  while (unload.type !== "Success") {
     switch (unload.type) {
       case "FleetNotDockedToStarbase":
         await actionWrapper(stopMining, fleet, resourceToMine);
         await actionWrapper(dockToStarbase, fleet);
+        unload = await actionWrapper(unloadCargo, fleet, resourceToMine, CargoPodType.CargoHold, new BN(MAX_AMOUNT));
         break;
     }
   }
