@@ -20,6 +20,9 @@ export const unloadCargo = async (
   // issues and errors handling
   switch (ix.type) {
     // issues that lead to the next action of the main script or the end of the script
+    case "FleetNotDockedToStarbase":
+      console.log(`Fleet not docked!`);
+      return { type: "FleetNotDockedToStarbase" as const };
     case "NoResourcesToWithdraw":
       console.log(`No ${resourceName} to withdraw`);
       return { type: "NoResourcesToWithdraw" as const };

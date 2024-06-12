@@ -16,9 +16,9 @@ export async function actionWrapper<R, A extends any[]>(
       if (e instanceof NoEnoughTokensToPerformSageAction) throw e;
       if (e instanceof SendTransactionsFailed) throw e;
       
-      console.error(`\nAction failed. Auto retry in 10 seconds. ${e}`);
+      console.error(`\nAction failed. Auto retry in 1 seconds. ${e}`);
       sendNotification(NotificationMessage.FAIL_WARNING);
-      await wait(10);
+      await wait(1);
     }
   }
 }
