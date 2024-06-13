@@ -67,10 +67,9 @@ export const cargoV2 = async (
     if (movementGo === MovementType.Warp) {
       for (let i = 1; i < goRoute.length; i++) {
         const sectorTo = goRoute[i];
-        const warp = await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, true);
-        if (warp.type !== "Success") {
-          await actionWrapper(dockToStarbase, fleet);
-          return warp;
+        var warp = await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, true);
+        while (warp.type !== "Success") {
+          warp = await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, true);
         }
       }   
     }
