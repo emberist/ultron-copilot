@@ -19,8 +19,12 @@ import { startCargo } from "./prescripts/startCargo";
 import { startScan } from "./prescripts/startScan";
 import { startCombo } from "./prescripts/startCombo";
 import { startCraft } from "./prescripts/startCraft";
+import { fetch, setGlobalDispatcher, Agent } from "undici"
+
+
 
 const test = async () => {
+
   console.log(`Welcome to Ultron Copilot ${version}!`);
 
   const { startOption } = await setStart();
@@ -52,6 +56,10 @@ const test = async () => {
 
     // qui si imposta il keypir
     const keypair = await getKeypairFromSecret(profile);
+
+    //allunghiamo il timeout per le fetch
+    setGlobalDispatcher(new Agent({ connect: { timeout: 120_000 } }) )
+
 
     // 1. Setup environment (SageGame.ts) [keypair required]
     try {
