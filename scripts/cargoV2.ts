@@ -67,9 +67,14 @@ export const cargoV2 = async (
     if (movementGo === MovementType.Warp) {
       for (let i = 1; i < goRoute.length; i++) {
         const sectorTo = goRoute[i];
-        var warp = await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, true);
-        while (warp.type !== "Success") {
-          warp = await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, true);
+        const warp = await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, true);
+        if (warp.type !== "Success") {
+            switch (warp.type){
+              case "FleetIsDocked":
+                await actionWrapper(undockFromStarbase, fleet);
+                return warp
+                break
+            }
         }
       }   
     }
@@ -78,9 +83,13 @@ export const cargoV2 = async (
       const sectorTo = goRoute[1];
       const subwarp = await actionWrapper(subwarpToSector, fleet, sectorTo, goFuelNeeded);
       if (subwarp.type !== "Success") {
-        await actionWrapper(dockToStarbase, fleet);
-        return subwarp;
-      }
+        switch (subwarp.type){
+          case "FleetIsDocked":
+            await actionWrapper(undockFromStarbase, fleet);
+            return subwarp
+            break
+        }
+    }
     }
 
     // 6. dock to starbase
