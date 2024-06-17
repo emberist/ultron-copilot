@@ -92,7 +92,7 @@ export const miningV2 = async (
   if (movementGo && movementGo === MovementType.Warp && goRoute && goFuelNeeded) {
     for (let i = 1; i < goRoute.length; i++) {
       const sectorTo = goRoute[i];
-      const warp = await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, i < goRoute.length);
+      const warp = await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, i < goRoute.length - 1);
       if (warp.type !== "Success") {
         switch (warp.type) {
           case "FleetIsDocked":
@@ -159,7 +159,7 @@ export const miningV2 = async (
   if (movementBack && movementBack === MovementType.Warp && backRoute && backFuelNeeded) {
     for (let i = 1; i < backRoute.length; i++) {
       const sectorTo = backRoute[i];
-      const warp = await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded,  i < backRoute.length);
+      const warp = await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded,  i < backRoute.length - 1);
       if (warp.type !== "Success") {
         switch (warp.type) {
           case "FleetIsDocked":

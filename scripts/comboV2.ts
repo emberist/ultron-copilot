@@ -104,7 +104,7 @@ export const comboV2 = async (
   if (movementGo === MovementType.Warp) {
     for (let i = 1; i < goRoute.length; i++) {
       const sectorTo = goRoute[i];
-      const warp = await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, i < goRoute.length);
+      const warp = await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, i < goRoute.length - 1);
       if (warp.type !== "Success") {
         switch (warp.type) {
           case "FleetIsDocked":
@@ -207,7 +207,7 @@ export const comboV2 = async (
   if (movementBack === MovementType.Warp) {
     for (let i = 1; i < backRoute.length; i++) {
       const sectorTo = backRoute[i];
-      const warp = await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, true);
+      const warp = await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, i < backRoute.length - 1);
       if (warp.type !== "Success") {
         switch (warp.type) {
           case "FleetIsDocked":

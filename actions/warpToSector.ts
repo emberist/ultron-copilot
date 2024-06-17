@@ -7,7 +7,7 @@ export const warpToSector = async (
   fleet: SageFleet,
   sector: SectorRoute,
   fuelNeeded: number,
-  waitCooldown?: boolean
+  waitCooldown: boolean
 ) => {
   // action starts
   console.log(`\nStart warp...`);
@@ -49,7 +49,9 @@ export const warpToSector = async (
   console.log(`Warp completed!`);
 
   if (waitCooldown) {
+    console.log(`Waiting cooldown for ${fleet.getMovementStats().warpCoolDown} seconds...`);
     await wait(fleet.getMovementStats().warpCoolDown);
+    console.log(`Cooldown completed!`);
   }
 
   // action ends
