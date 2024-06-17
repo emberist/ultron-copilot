@@ -109,11 +109,11 @@ export const comboV2 = async (
         switch (warp.type) {
           case "FleetIsDocked":
             await actionWrapper(undockFromStarbase, fleet);
-            await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, i < goRoute.length);
+            await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, i < goRoute.length - 1);
             break;
           case "FleetIsMining":
             await actionWrapper(stopMining, fleet, resourceToMine);
-            await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, i < goRoute.length);
+            await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, i < goRoute.length - 1);
             break;
           default:
             return warp;
@@ -212,11 +212,11 @@ export const comboV2 = async (
         switch (warp.type) {
           case "FleetIsDocked":
             await actionWrapper(undockFromStarbase, fleet);
-            await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, true);
+            await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, i < backRoute.length - 1);
             break;
           case "FleetIsMining":
             await actionWrapper(stopMining, fleet, resourceToMine);
-            await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, true);
+            await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, i < backRoute.length - 1);
             break;
           default:
             return warp;
