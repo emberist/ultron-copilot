@@ -207,16 +207,16 @@ export const comboV2 = async (
   if (movementBack === MovementType.Warp) {
     for (let i = 1; i < backRoute.length; i++) {
       const sectorTo = backRoute[i];
-      const warp = await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, true);
+      const warp = await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, i < backRoute.length - 1);
       if (warp.type !== "Success") {
         switch (warp.type) {
           case "FleetIsDocked":
             await actionWrapper(undockFromStarbase, fleet);
-            await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, true);
+            await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, i < backRoute.length - 1);
             break;
           case "FleetIsMining":
             await actionWrapper(stopMining, fleet, resourceToMine);
-            await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, true);
+            await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, i < backRoute.length - 1);
             break;
           default:
             return warp;
