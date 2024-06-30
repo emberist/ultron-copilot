@@ -10,7 +10,7 @@
     "build-prod": "npx tsc -p tsconfig.prod.json",
     "postbuild-dev": "cross-env BUILD_ENV=dev node utils/scripts/postbuild.js",
     "postbuild-prod": "cross-env BUILD_ENV=prod node utils/scripts/postbuild.js",
-    "run-dev": "ts-node -P tsconfig.dev.json index.ts",
+    "dev": "ts-node -P tsconfig.dev.json index.ts",
     "run-prod": "ts-node -P tsconfig.prod.json index.ts",
     "start-dev": "yarn run build-dev && node ./dist-dev/index.js",
     "start-prod": "yarn run build-prod && node ./dist-prod/index.js",
@@ -22,6 +22,7 @@
     "@types/inquirer": "^8.0.0",
     "@types/node": "^20.12.7",
     "cross-env": "^7.0.3",
+    "dotenv": "^16.4.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.0.0"
   },
@@ -29,20 +30,23 @@
     "@solana/spl-token": "<=0.4.1",
     "@solana/spl-token-metadata": "<=0.1.2",
     "@solana/web3.js": "<=1.91.4",
+    "@staratlas/anchor": "0.25.1",
+    "@staratlas/cargo": "1.0.4",
+    "@staratlas/crafting": "1.0.4",
+    "@staratlas/data-source": "0.7.5",
+    "@staratlas/player-profile": "0.9.1",
+    "@staratlas/points": "1.0.4",
+    "@staratlas/profile-faction": "0.4.1",
     "@staratlas/sage": "^1.2.0",
     "bs58": "^5.0.0",
     "cli-progress": "^3.12.0",
     "fs-extra": "^11.2.0",
     "inquirer": "^8.0.0",
     "semver": "^7.6.2",
+    "ts-pattern": "^5.2.0",
     "undici": "^6.18.2"
   },
-  "resolutions": {
-    "@solana/spl-token": "<=0.4.1",
-    "@solana/spl-token-metadata": "<=0.1.2",
-    "@solana/web3.js": "<=1.91.4",
-    "rpc-websockets": "7.11.0"
-  },
   "author": "meta_arion",
-  "license": "ISC"
+  "license": "ISC",
+  "packageManager": "pnpm@9.4.0+sha256.b6fd0bfda555e7e584ad7e56b30c68b01d5a04f9ee93989f4b93ca8473c49c74"
 }

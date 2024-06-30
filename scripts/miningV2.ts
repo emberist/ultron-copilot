@@ -1,3 +1,4 @@
+import { BN } from "@staratlas/anchor";
 import { dockToStarbase } from "../actions/dockToStarbase";
 import { loadCargo } from "../actions/loadCargo";
 import { startMining } from "../actions/startMining";
@@ -8,11 +9,10 @@ import { unloadCargo } from "../actions/unloadCargo";
 import { warpToSector } from "../actions/warpToSector";
 import { MAX_AMOUNT, MovementType } from "../common/constants";
 import { NotificationMessage } from "../common/notifications";
+import { CargoPodType, SageFleet, SectorRoute } from "../src/SageFleet";
+import { ResourceName } from "../src/SageGame";
 import { actionWrapper } from "../utils/actions/actionWrapper";
 import { sendNotification } from "../utils/actions/sendNotification";
-import { BN } from "@staratlas/anchor";
-import { ResourceName } from "../src/SageGame";
-import { CargoPodType, SageFleet, SectorRoute } from "../src/SageFleet";
 
 export const miningV2 = async (
   fleet: SageFleet,
@@ -26,7 +26,7 @@ export const miningV2 = async (
   goFuelNeeded?: number,
   movementBack?: MovementType,
   backRoute?: SectorRoute[],
-  backFuelNeeded?: number,
+  backFuelNeeded?: number
 ) => {
   const fleetCurrentSector = fleet.getCurrentSector();
   if (!fleetCurrentSector) return { type: "FleetCurrentSectorError" as const };
@@ -36,42 +36,71 @@ export const miningV2 = async (
   const ammoBank = fleet.getAmmoBank();
 
   const cargoHold = fleet.getCargoHold();
-  const [foodInCargoData] = cargoHold.resources.filter((item) => item.mint.equals(fleet.getSageGame().getResourcesMint().Food));
+  const [foodInCargoData] = cargoHold.resources.filter((item) =>
+    item.mint.equals(fleet.getSageGame().getResourcesMint().Food)
+  );
 
-  if (new BN(fuelNeeded).gt(fuelTank.maxCapacity)) return { type: "NotEnoughFuelCapacity" as const };
+  if (new BN(fuelNeeded).gt(fuelTank.maxCapacity))
+    return { type: "NotEnoughFuelCapacity" as const };
 
   // 0. Dock to starbase (optional)
   if (
-    !fleet.getCurrentState().StarbaseLoadingBay && 
-    fleet.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates).type === "Success"
+    !fleet.getCurrentState().StarbaseLoadingBay &&
+    fleet.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates)
+      .type === "Success"
   ) {
     await actionWrapper(dockToStarbase, fleet);
   } else if (
-    !fleet.getCurrentState().StarbaseLoadingBay && 
-    fleet.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates).type !== "Success"
+    !fleet.getCurrentState().StarbaseLoadingBay &&
+    fleet.getSageGame().getStarbaseByCoords(fleetCurrentSector.coordinates)
+      .type !== "Success"
   ) {
     return { type: "StarbaseNotFound" as const };
   }
 
   // 1. load fuel
   if (fuelTank.loadedAmount.lt(new BN(fuelNeeded))) {
-    await actionWrapper(loadCargo, fleet, ResourceName.Fuel, CargoPodType.FuelTank, new BN(MAX_AMOUNT));
+    await actionWrapper(
+      loadCargo,
+      fleet,
+      ResourceName.Fuel,
+      CargoPodType.FuelTank,
+      new BN(MAX_AMOUNT)
+    );
   }
 
   // 2. load ammo
   if (ammoBank.loadedAmount.lt(new BN(ammoNeeded))) {
-    await actionWrapper(loadCargo, fleet, ResourceName.Ammo, CargoPodType.AmmoBank, new BN(MAX_AMOUNT));
+    await actionWrapper(
+      loadCargo,
+      fleet,
+      ResourceName.Ammo,
+      CargoPodType.AmmoBank,
+      new BN(MAX_AMOUNT)
+    );
   }
 
   // 3. load food
   if (foodInCargoData) {
     if (Number(foodInCargoData.amount || 0) < foodNeeded) {
-      await actionWrapper(loadCargo, fleet, ResourceName.Food, CargoPodType.CargoHold, new BN(foodNeeded - Number(foodInCargoData.amount || 0)));
+      await actionWrapper(
+        loadCargo,
+        fleet,
+        ResourceName.Food,
+        CargoPodType.CargoHold,
+        new BN(foodNeeded - Number(foodInCargoData.amount || 0))
+      );
     }
   } else {
-    await actionWrapper(loadCargo, fleet, ResourceName.Food, CargoPodType.CargoHold, new BN(foodNeeded));
+    await actionWrapper(
+      loadCargo,
+      fleet,
+      ResourceName.Food,
+      CargoPodType.CargoHold,
+      new BN(foodNeeded)
+    );
   }
-  
+
   // 4. undock from starbase
   const undock = await actionWrapper(undockFromStarbase, fleet);
   if (undock.type !== "Success") {
@@ -89,30 +118,53 @@ export const miningV2 = async (
   }
 
   // 5. move to sector (->)
-  if (movementGo && movementGo === MovementType.Warp && goRoute && goFuelNeeded) {
+  if (movementGo && movementGo === "Warp" && goRoute && goFuelNeeded) {
     for (let i = 1; i < goRoute.length; i++) {
       const sectorTo = goRoute[i];
-      const warp = await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, i < goRoute.length - 1);
+      const warp = await actionWrapper(
+        warpToSector,
+        fleet,
+        sectorTo,
+        goFuelNeeded,
+        i < goRoute.length - 1
+      );
       if (warp.type !== "Success") {
         switch (warp.type) {
           case "FleetIsDocked":
             await actionWrapper(undockFromStarbase, fleet);
-            await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, i < goRoute.length - 1);
+            await actionWrapper(
+              warpToSector,
+              fleet,
+              sectorTo,
+              goFuelNeeded,
+              i < goRoute.length - 1
+            );
             break;
           case "FleetIsMining":
             await actionWrapper(stopMining, fleet, resourceToMine);
-            await actionWrapper(warpToSector, fleet, sectorTo, goFuelNeeded, i < goRoute.length - 1);
+            await actionWrapper(
+              warpToSector,
+              fleet,
+              sectorTo,
+              goFuelNeeded,
+              i < goRoute.length - 1
+            );
             break;
           default:
             return warp;
         }
       }
-    }   
+    }
   }
 
-  if (movementGo && movementGo === MovementType.Subwarp && goRoute && goFuelNeeded) {
+  if (movementGo && movementGo === "Subwarp" && goRoute && goFuelNeeded) {
     const sectorTo = goRoute[1];
-    const subwarp = await actionWrapper(subwarpToSector, fleet, sectorTo, goFuelNeeded);
+    const subwarp = await actionWrapper(
+      subwarpToSector,
+      fleet,
+      sectorTo,
+      goFuelNeeded
+    );
     if (subwarp.type !== "Success") {
       switch (subwarp.type) {
         case "FleetIsDocked":
@@ -130,7 +182,12 @@ export const miningV2 = async (
   }
 
   // 6. start mining
-  const mining = await actionWrapper(startMining, fleet, resourceToMine, mineTime);
+  const mining = await actionWrapper(
+    startMining,
+    fleet,
+    resourceToMine,
+    mineTime
+  );
   if (mining.type !== "Success") {
     switch (mining.type) {
       case "FleetIsDocked":
@@ -156,30 +213,58 @@ export const miningV2 = async (
   }
 
   // 8. move to sector (<-)
-  if (movementBack && movementBack === MovementType.Warp && backRoute && backFuelNeeded) {
+  if (movementBack && movementBack === "Warp" && backRoute && backFuelNeeded) {
     for (let i = 1; i < backRoute.length; i++) {
       const sectorTo = backRoute[i];
-      const warp = await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded,  i < backRoute.length - 1);
+      const warp = await actionWrapper(
+        warpToSector,
+        fleet,
+        sectorTo,
+        backFuelNeeded,
+        i < backRoute.length - 1
+      );
       if (warp.type !== "Success") {
         switch (warp.type) {
           case "FleetIsDocked":
             await actionWrapper(undockFromStarbase, fleet);
-            await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, i < backRoute.length - 1);
+            await actionWrapper(
+              warpToSector,
+              fleet,
+              sectorTo,
+              backFuelNeeded,
+              i < backRoute.length - 1
+            );
             break;
           case "FleetIsMining":
             await actionWrapper(stopMining, fleet, resourceToMine);
-            await actionWrapper(warpToSector, fleet, sectorTo, backFuelNeeded, i < backRoute.length - 1);
+            await actionWrapper(
+              warpToSector,
+              fleet,
+              sectorTo,
+              backFuelNeeded,
+              i < backRoute.length - 1
+            );
             break;
           default:
             return warp;
         }
       }
-    }   
+    }
   }
 
-  if (movementBack && movementBack === MovementType.Subwarp && backRoute && backFuelNeeded) {
+  if (
+    movementBack &&
+    movementBack === "Subwarp" &&
+    backRoute &&
+    backFuelNeeded
+  ) {
     const sectorTo = backRoute[1];
-    const subwarp = await actionWrapper(subwarpToSector, fleet, sectorTo, backFuelNeeded);
+    const subwarp = await actionWrapper(
+      subwarpToSector,
+      fleet,
+      sectorTo,
+      backFuelNeeded
+    );
     if (subwarp.type !== "Success") {
       switch (subwarp.type) {
         case "FleetIsDocked":
@@ -211,15 +296,26 @@ export const miningV2 = async (
     }
   }
 
-
   // 10. unload cargo
-  var unload = await actionWrapper(unloadCargo, fleet, resourceToMine, CargoPodType.CargoHold, new BN(MAX_AMOUNT));
+  var unload = await actionWrapper(
+    unloadCargo,
+    fleet,
+    resourceToMine,
+    CargoPodType.CargoHold,
+    new BN(MAX_AMOUNT)
+  );
   while (unload.type !== "Success") {
     switch (unload.type) {
       case "FleetNotDockedToStarbase":
         await actionWrapper(stopMining, fleet, resourceToMine);
         await actionWrapper(dockToStarbase, fleet);
-        unload = await actionWrapper(unloadCargo, fleet, resourceToMine, CargoPodType.CargoHold, new BN(MAX_AMOUNT));
+        unload = await actionWrapper(
+          unloadCargo,
+          fleet,
+          resourceToMine,
+          CargoPodType.CargoHold,
+          new BN(MAX_AMOUNT)
+        );
         break;
     }
   }
@@ -231,5 +327,4 @@ export const miningV2 = async (
   await sendNotification(NotificationMessage.MINING_SUCCESS, fleet.getName());
 
   return { type: "Success" as const };
-
-}
+};

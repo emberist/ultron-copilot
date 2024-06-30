@@ -1,6 +1,13 @@
 #!/usr/bin/env node
 
+import { config } from "dotenv";
+import { Agent, setGlobalDispatcher } from "undici";
 import { version } from "./package.json";
+import { startCargo } from "./prescripts/startCargo";
+import { startCombo } from "./prescripts/startCombo";
+import { startCraft } from "./prescripts/startCraft";
+import { startMining } from "./prescripts/startMining";
+import { startScan } from "./prescripts/startScan";
 import { SageGame } from "./src/SageGame";
 import { SagePlayer } from "./src/SagePlayer";
 import { getConnection } from "./utils/inputs/getConnection";
@@ -9,35 +16,32 @@ import { inputProfile } from "./utils/inputs/inputProfile";
 import { resetProfile } from "./utils/inputs/resetProfile";
 import { setStart } from "./utils/inputs/setStart";
 import { setupProfileData } from "./utils/inputs/setupProfileData";
-import { setPriority } from "./utils/inputsV2/setPriority";
-import { PriorityLevel } from "./common/constants";
-import { setCustomPriority } from "./utils/inputsV2/setCustomPriority";
 import { setActivityV2 } from "./utils/inputsV2/setActivity";
+import { setCustomPriority } from "./utils/inputsV2/setCustomPriority";
 import { setPlayerProfile } from "./utils/inputsV2/setPlayerProfile";
-import { startMining } from "./prescripts/startMining";
-import { startCargo } from "./prescripts/startCargo";
-import { startScan } from "./prescripts/startScan";
-import { startCombo } from "./prescripts/startCombo";
-import { startCraft } from "./prescripts/startCraft";
-import { fetch, setGlobalDispatcher, Agent } from "undici"
+import { setPriority } from "./utils/inputsV2/setPriority";
 
+config();
 
-
-const test = async () => {
-
+const program = async () => {
   console.log(`Welcome to Ultron Copilot ${version}!`);
 
-  const { startOption } = await setStart();
+  if (!process.env.SKIP_MENU) {
+    const { startOption } = await setStart();
 
-  if (startOption === "Settings") {
-    await resetProfile();
-    return;
+    if (startOption === "Settings") {
+      await resetProfile();
+      return;
+    }
   }
 
   const sage = await (async () => {
     // qui l'utente configura il livello di priority fee desiderato e l'eventuale custom priority fee value
     const priorityFees = await setPriority();
-    const { customPriority } = priorityFees.priority === PriorityLevel.Custom ? await setCustomPriority() : { customPriority: 0 }
+    const { customPriority } =
+      priorityFees.priority === "custom"
+        ? await setCustomPriority()
+        : { customPriority: 0 };
 
     // qui l'utente sceglie il profilo desiderato
     const { profile } = await inputProfile();
@@ -50,7 +54,7 @@ const test = async () => {
 
     // FIX: se la connessione non è andata a buon fine, Ultron riprova
     if (connection.type !== "Success") {
-      console.log("Connection failed, please retry.")
+      console.log("Connection failed, please retry.");
       return;
     }
 
@@ -58,12 +62,15 @@ const test = async () => {
     const keypair = await getKeypairFromSecret(profile);
 
     //allunghiamo il timeout per le fetch
-    setGlobalDispatcher(new Agent({ connect: { timeout: 120_000 } }) )
-
+    setGlobalDispatcher(new Agent({ connect: { timeout: 120_000 } }));
 
     // 1. Setup environment (SageGame.ts) [keypair required]
     try {
-      const game = await SageGame.init(keypair, connection.data, { level: priorityFees.priority, value: customPriority });
+      const game = await SageGame.init(keypair, connection.data, {
+        level: priorityFees.priority,
+        value: customPriority,
+      });
+
       return game;
     } catch (err) {
       return;
@@ -71,31 +78,35 @@ const test = async () => {
   })();
 
   if (!sage) {
-    console.log("Unable to initialize Sage Game. Check your configuration and network connection (IMPORTANT: this could also be an ongoing SAGE update or an rpc error).");
+    console.log(
+      "Unable to initialize Sage Game. Check your configuration and network connection (IMPORTANT: this could also be an ongoing SAGE update or an rpc error)."
+    );
     return;
   }
 
   // 2. Setup player (SagePlayer.ts)
   const playerProfiles = await sage.getPlayerProfilesAsync();
+
   if (playerProfiles.type !== "Success") {
-    console.log("Error getting player profiles.")
+    console.log("Error getting player profiles.");
     return;
   }
 
-  const playerProfile = playerProfiles.data.length == 1 ?
-    playerProfiles.data[0] :
-    (await setPlayerProfile(playerProfiles.data)).data;
+  const playerProfile =
+    playerProfiles.data.length == 1
+      ? playerProfiles.data[0]
+      : (await setPlayerProfile(playerProfiles.data)).data;
 
   const player = await SagePlayer.init(sage, playerProfile);
 
   // 3. Check if player has enough Quattrini
   const qttrBalance = await sage.getQuattrinoBalance();
   if (qttrBalance.type !== "Success" || qttrBalance.data == 0) {
-    console.log(qttrBalance.message)
+    console.log(qttrBalance.message);
     return;
-  };
+  }
 
-  console.log(qttrBalance.message)
+  console.log(qttrBalance.message);
 
   // 4. Set activity
   const activity = await setActivityV2();
@@ -109,7 +120,7 @@ const test = async () => {
       // 5. Play with mining
       const mining = await startMining(player);
       if (mining.type !== "Success") {
-        console.log("Mining failed.", mining.type)
+        console.log("Mining failed.", mining.type);
         return;
       }
       break;
@@ -118,7 +129,7 @@ const test = async () => {
       // 6. Play with cargo
       const cargo = await startCargo(player);
       if (cargo.type !== "Success") {
-        console.log("Cargo failed.", cargo.type)
+        console.log("Cargo failed.", cargo.type);
         return;
       }
       break;
@@ -127,7 +138,7 @@ const test = async () => {
       // 7. Play with cargo mining
       const combo = await startCombo(player);
       if (combo.type !== "Success") {
-        console.log("Combo failed.", combo.type)
+        console.log("Combo failed.", combo.type);
         return;
       }
       break;
@@ -136,7 +147,7 @@ const test = async () => {
       // 8. Play with scanning
       const scan = await startScan(player);
       if (scan.type !== "Success") {
-        console.log("\nScan failed.", scan.type)
+        console.log("\nScan failed.", scan.type);
         return;
       }
       break;
@@ -145,7 +156,7 @@ const test = async () => {
       // 9. Play with crafting (SageCrafting.ts)
       const craft = await startCraft(player);
       if (craft.type !== "Success") {
-        console.log("\Craft failed.", craft.type)
+        console.log("Craft failed.", craft.type);
         return;
       }
       break;
@@ -165,9 +176,9 @@ const test = async () => {
    console.log(sage.getResourceName(data.data[0])); */
 
   return;
-}
+};
 
-test().catch((err) => {
+program().catch((err) => {
   console.error(err);
   process.exit(1);
 });

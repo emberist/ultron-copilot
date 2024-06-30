@@ -1,11 +1,19 @@
 import { Keypair } from "@solana/web3.js";
+import base58 from "bs58";
 import inquirer from "inquirer";
 import { Profile } from "../../common/constants";
+import { getKeypairVariableName } from "../variables/getKeypairVariableName";
 import { decryptKeypair } from "./decryptKeypair";
 
 export const getKeypairFromSecret = async (
   profile: Profile
 ): Promise<Keypair> => {
+  const keypairFromEnv = process.env[getKeypairVariableName(profile)];
+
+  if (keypairFromEnv) {
+    return Keypair.fromSecretKey(base58.decode(keypairFromEnv));
+  }
+
   const answer = await inquirer.prompt([
     {
       type: "password",

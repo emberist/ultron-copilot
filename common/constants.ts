@@ -1,9 +1,8 @@
 import { PublicKey } from "@solana/web3.js";
+import { BN } from "@staratlas/anchor";
 import { homedir } from "os";
 import path from "path";
-import { KeypairPath, RpcPath } from "./types";
-import { BN } from "@staratlas/anchor";
-import { SectorCoordinates } from "./types";
+import { KeypairPath, RpcPath, SectorCoordinates } from "./types";
 
 export const MAX_AMOUNT = 999_999_999;
 
@@ -13,16 +12,12 @@ export const quattrinoTokenPubkey = new PublicKey(
 
 export const startOptions = ["Start", "Settings"];
 
-export const resetOptions = [
-  "Reset Profile 1 - Keypair",
-  "Reset Profile 1 - RPC",
-  "Reset Profile 2 - Keypair",
-  "Reset Profile 2 - RPC",
-  "Reset Profile 3 - Keypair",
-  "Reset Profile 3 - RPC",
-];
-
 export const profiles = ["Profile 1", "Profile 2", "Profile 3"] as const;
+
+export const resetOptions = profiles.flatMap((profile) => [
+  `Reset ${profile} - Keypair`,
+  `Reset ${profile} - RPC`,
+]);
 
 export type Profile = (typeof profiles)[number];
 
@@ -57,49 +52,37 @@ export const verifiedRpc = [
   "solana-mainnet.quiknode.pro",
   "solana-mainnet.g.alchemy.com",
   "solana-mainnet.core.chainstack.com",
-  "solana-mainnet.rpc.extrnode.com"
+  "solana-mainnet.rpc.extrnode.com",
 ];
 
-export enum MovementType {
-  Warp = "Warp",
-  Subwarp = "Subwarp",
-}
+export const movements = ["Warp", "Subwarp"] as const;
+export type MovementType = (typeof movements)[number];
 
-export const movements = [
-  MovementType.Warp,
-  MovementType.Subwarp,
-]
+export const priorities = [
+  "default",
+  "low",
+  "medium",
+  "high",
+  "custom",
+  "none",
+] as const;
 
-export enum PriorityLevel {
-  None = "None",
-  Default = "Default",
-  Low = "Low",
-  Medium = "Medium",
-  High = "High",
-  Custom = "Custom",
-}
+export type PriorityLevel = (typeof priorities)[number];
 
-export enum PriorityLevelValue {
-  Default = 0,
-  Low = 10000,
-  Medium = 100000,
-  High = 500000,
-  Limit = 1000000
-}
+export const priorityLevelValue = {
+  none: 0,
+  default: 0,
+  low: 10000,
+  medium: 100000,
+  high: 500000,
+  custom: 0,
+  limit: 1000000,
+} satisfies Record<PriorityLevel | "limit", number>;
 
 export type CustomPriorityFee = {
   level: PriorityLevel;
   value?: number;
-}
-
-export const priority: PriorityLevel[] = [
-  PriorityLevel.Default, 
-  PriorityLevel.Low, 
-  PriorityLevel.Medium, 
-  PriorityLevel.High,
-  PriorityLevel.Custom,
-  PriorityLevel.None
-];
+};
 
 export const starbasesInfo = [
   {

@@ -2,13 +2,28 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
 import { chmodSync, outputFileSync, removeSync } from "fs-extra";
 import inquirer, { QuestionCollection } from "inquirer";
+import { Profile } from "../../common/constants";
 import { encrypt } from "../crypto";
+import { getKeypairVariableName } from "../variables/getKeypairVariableName";
 import { checkKeypairFile } from "./checkKeypairFile";
+import { getProfileKeypairPath } from "./getProfileKeypairPath";
 
-export const setKeypair = (keypairPath: string) => {
+export const setKeypair = (profile: Profile) => {
+  if (process.env[getKeypairVariableName(profile)]) {
+    return Promise.resolve();
+  }
+
+  const keypairPath = getProfileKeypairPath(profile);
+
   const ckf = checkKeypairFile(keypairPath);
-  if (ckf.type === "KeypairFileParsingError") removeSync(keypairPath);
-  if (ckf.type === "Success") return Promise.resolve();
+
+  if (ckf.type === "KeypairFileParsingError") {
+    removeSync(keypairPath);
+  }
+
+  if (ckf.type === "Success") {
+    return Promise.resolve();
+  }
 
   const questions: QuestionCollection = [
     {
