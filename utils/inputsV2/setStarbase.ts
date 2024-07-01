@@ -35,9 +35,13 @@ export const setStarbaseV2 = async (
     return { type: "FleetCurrentSectorError" as const };
   }
 
-  const maybeTargetSector = process.env.TARGET_STARBASE_SECTOR;
+  const maybeTargetSectorX = process.env.TARGET_STARBASE_SECTOR_X;
+  const maybeTargetSectorY = process.env.TARGET_STARBASE_SECTOR_Y;
 
-  const targetSector = maybeTargetSector ? JSON.parse(maybeTargetSector) : null;
+  const targetSector =
+    maybeTargetSectorX && maybeTargetSectorY
+      ? ([maybeTargetSectorX, maybeTargetSectorY] as const)
+      : ([null, null] as const);
 
   const maybeTargetStarbase = starbases.find((starbase) => {
     const [x, y] = starbase.data.data.sector;
