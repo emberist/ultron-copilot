@@ -9,7 +9,7 @@
     "build:dev": "npx tsc -p tsconfig.dev.json",
     "start:dev": "yarn run build-dev && node ./dist-dev/index.js",
     "build": "npx tsc -p tsconfig.prod.json",
-    "start": "yarn run build-prod && node ./dist-prod/index.js",
+    "start": "node ./dist/index.js",
     "postbuild-dev": "cross-env BUILD_ENV=dev node utils/scripts/postbuild.js",
     "postbuild-prod": "cross-env BUILD_ENV=prod node utils/scripts/postbuild.js",
     "dev": "ts-node -P tsconfig.dev.json index.ts",
