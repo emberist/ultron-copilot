@@ -46,6 +46,12 @@
     "ts-pattern": "^5.2.0",
     "undici": "^6.18.2"
   },
+  "resolutions": {
+    "@solana/spl-token": "<=0.4.1",
+    "@solana/spl-token-metadata": "<=0.1.2",
+    "@solana/web3.js": "<=1.91.4",
+    "rpc-websockets": "7.11.0"
+  },
   "author": "meta_arion",
   "license": "ISC",
   "packageManager": "yarn@4.3.1+sha256.2535167e742927e1d2a1610d5004576e4e8f764d2ca5470d19536790f55cd6e2"
