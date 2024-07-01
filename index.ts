@@ -1,6 +1,4 @@
-#!/usr/bin/env node
-
-import { config } from "dotenv";
+import dotenv from "dotenv";
 import { Agent, setGlobalDispatcher } from "undici";
 import { version } from "./package.json";
 import { startCargo } from "./prescripts/startCargo";
@@ -21,7 +19,7 @@ import { setCustomPriority } from "./utils/inputsV2/setCustomPriority";
 import { setPlayerProfile } from "./utils/inputsV2/setPlayerProfile";
 import { setPriority } from "./utils/inputsV2/setPriority";
 
-config();
+dotenv.config();
 
 const program = async () => {
   console.log(`Welcome to Ultron Copilot ${version}!`);
