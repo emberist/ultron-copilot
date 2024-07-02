@@ -33,7 +33,7 @@ const program = async () => {
     }
   }
 
-  const sage = await (async () => {
+  const createGame = async () => {
     // qui l'utente configura il livello di priority fee desiderato e l'eventuale custom priority fee value
     const priorityFees = await setPriority();
     const { customPriority } =
@@ -73,7 +73,9 @@ const program = async () => {
     } catch (err) {
       return;
     }
-  })();
+  };
+
+  const sage = await createGame();
 
   if (!sage) {
     console.log(
@@ -99,6 +101,7 @@ const program = async () => {
 
   // 3. Check if player has enough Quattrini
   const qttrBalance = await sage.getQuattrinoBalance();
+
   if (qttrBalance.type !== "Success" || qttrBalance.data == 0) {
     console.log(qttrBalance.message);
     return;
